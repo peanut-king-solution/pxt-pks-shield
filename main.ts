@@ -1235,6 +1235,9 @@ namespace pksdriver {
         return wantedDirection;
     }
 
+    //% block="get Yaw" subcategory="Maze Car"
+    //% group="compass"
+    //% weight=70
     export function get_yaw () {
         let ax = input.acceleration(Dimension.X)
         let ay = input.acceleration(Dimension.Y)
