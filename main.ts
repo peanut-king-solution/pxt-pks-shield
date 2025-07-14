@@ -1235,10 +1235,10 @@ namespace pksdriver {
         return wantedDirection;
     }
 
-    //% block="get Yaw" subcategory="Maze Car"
+    //% block="get Yaw(Rotation)" subcategory="Maze Car"
     //% group="compass"
     //% weight=70
-    export function get_yaw () {
+    export function get_YAW () {
         let ax = input.acceleration(Dimension.X)
         let ay = input.acceleration(Dimension.Y)
         let az = input.acceleration(Dimension.Z)
@@ -1258,7 +1258,7 @@ namespace pksdriver {
         yaw = (yaw + 360) % 360
         // Display yaw (rounded to nearest degree)
         return yaw
-}
+    }
 
 }
 
