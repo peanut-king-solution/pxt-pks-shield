@@ -1235,6 +1235,28 @@ namespace pksdriver {
         return wantedDirection;
     }
 
+    export function get_yaw () {
+        let ax = input.acceleration(Dimension.X)
+        let ay = input.acceleration(Dimension.Y)
+        let az = input.acceleration(Dimension.Z)
+        // Calculate pitch and roll (in radians)
+        let pitch = Math.atan2(0 - ax, Math.sqrt(ay * ay + az * az))
+        let roll = Math.atan2(ay, az)
+        // Get magnetometer data
+        let mx = input.magneticForce(Dimension.X)
+        let my = input.magneticForce(Dimension.Y)
+        let mz = input.magneticForce(Dimension.Z)
+        // Tilt compensation
+        let x_comp = mx * Math.cos(pitch) + mz * Math.sin(pitch)
+        let y_comp = mx * Math.sin(roll) * Math.sin(pitch) + my * Math.cos(roll) - mz * Math.sin(roll) * Math.cos(pitch)
+        // Calculate yaw (heading in degrees, 0°-360°)
+        let yaw = Math.atan2(y_comp, x_comp) * (180 / Math.PI)
+        // Normalize to 0-360°
+        yaw = (yaw + 360) % 360
+        // Display yaw (rounded to nearest degree)
+        return yaw
+}
+
 }
 
 //ColorSensor
