@@ -1255,7 +1255,7 @@ namespace pksdriver {
         // Calculate yaw (heading in degrees, 0°-360°)
         let yaw = Math.atan2(y_comp, x_comp) * (180 / Math.PI)
         // Normalize to 0-360°
-        //yaw = (yaw + 360) % 360
+        yaw = (yaw + 360) % 360
         // Display yaw (rounded to nearest degree)
         return yaw
     }
