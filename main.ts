@@ -1298,6 +1298,16 @@ namespace pksdriver {
         
         return angleDifference;
     }
+ 
+    /*
+     * Read the virtual North Point set by the user.
+     */
+    //% block="get virtual North Point" subcategory="Maze Car"
+    //% group="compass"
+    //% weight=60
+    export function getNormalPoint() {
+        return normalPoint;
+    }
 
 }
 
