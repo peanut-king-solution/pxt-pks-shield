@@ -1339,6 +1339,16 @@ namespace pksdriver {
         return normalPoint;
     }
 
+    /**
+     * Reset the virtual North Point to offset 0 degrees.
+     */
+    //% block="reset virtual North Point" subcategory="Maze Car"
+    //% group="compass"
+    //% weight=60
+    export function resetNormalPoint() {
+        normalPoint = 0;
+    }
+
 }
 
 //ColorSensor
