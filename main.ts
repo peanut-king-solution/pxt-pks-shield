@@ -1237,6 +1237,9 @@ namespace pksdriver {
 
     let normalPoint = 0;
 
+    /*
+    * This function calculates the yaw angle of the device using micro:bit's accelerometer and magnetometer.
+    */
     //% block="get Yaw(Rotation)" subcategory="Maze Car"
     //% group="compass"
     //% weight=70
@@ -1263,6 +1266,9 @@ namespace pksdriver {
         return yaw
     }
 
+    /*
+    * Sets the current yaw angle as the virtual North Point.
+    */
     //% block="set North Point" subcategory="Maze Car"
     //% group="compass"
     //% weight=60
@@ -1270,6 +1276,11 @@ namespace pksdriver {
         normalPoint = get_YAW();
     }
 
+    /*
+    * This function calculates the angle difference between the current yaw angle and the set virtual North Point.
+    * It returns the angle difference in degrees within -180 to 180 degrees.
+    * Negative values indicate a counter-clockwise rotation from the North Point,positive values indicate a clockwise rotation.
+    */
     //% block="get angle difference from North Point" subcategory="Maze Car"
     //% group="compass"
     //% weight=50
