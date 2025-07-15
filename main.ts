@@ -1262,18 +1262,26 @@ namespace pksdriver {
         let yaw = Math.atan2(y_comp, x_comp) * (180 / Math.PI)
         // Normalize to 0-360°
         yaw = (yaw + 360) % 360
-        // Display yaw (rounded to nearest degree)
+
+        // This allows the user to set a virtual North Point by shift the yaw by the normalPoint
+        yaw = yaw - normalPoint;
+        // Normalize the yaw to be within 0 - 360 degrees
+        if (yaw < 0) {
+            yaw += 360;
+        } else if (yaw >= 360) {
+            yaw -= 360;
+        }
         return yaw
     }
 
     /**
      * Sets the current yaw angle as the virtual North Point.
      */
-    //% block="set North Point $target_angle" subcategory="Maze Car"
+    //% block="set North Point" subcategory="Maze Car"
     //% group="compass"
     //% weight=80
-    export function setNorthPoint(target_angle: number = get_YAW()) {
-        normalPoint = target_angle;
+    export function setNorthPoint()  {
+        normalPoint = get_YAW();
     }
 
     /**
@@ -1296,6 +1304,28 @@ namespace pksdriver {
             angleDifference += 360;
         } 
         
+        return angleDifference;
+    }
+
+    /**
+     * This function calculates the angle difference between the current yaw angle and the target angle.
+     * It returns the angle difference in degrees within -180 to 180 degrees.
+     * Negative values indicate a counter-clockwise rotation from the North Point,positive values indicate a clockwise rotation.
+     */
+    //% block="get angle difference $target_angle" subcategory="Maze Car"
+    //% group="compass"
+    //% weight=50
+    export function getAngleDifferenceFromVirtualNorthPoint(target_degree: number) {
+        let angleDifference = target_degree - normalPoint;
+
+        // Normalize the angle difference to be within -180 to 180 degrees
+        if (angleDifference > 180) {
+            angleDifference -= 360;
+        } else if (angleDifference < -180) {
+            angleDifference += 360;
+        } 
+
+        // Calculate the final angle difference
         return angleDifference;
     }
  
