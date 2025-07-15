@@ -1315,8 +1315,8 @@ namespace pksdriver {
     //% block="get angle difference $target_angle" subcategory="Maze Car"
     //% group="compass"
     //% weight=50
-    export function getAngleDifferenceFromVirtualNorthPoint(target_degree: number) {
-        let angleDifference = target_degree - normalPoint;
+    export function getAngleDifferenceFromVirtualNorthPoint(target_angle: number) {
+        let angleDifference = target_angle - normalPoint;
 
         // Normalize the angle difference to be within -180 to 180 degrees
         if (angleDifference > 180) {
