@@ -1235,10 +1235,13 @@ namespace pksdriver {
         return wantedDirection;
     }
 
+    let normalPoint = 0;
+
     //% block="get Yaw(Rotation)" subcategory="Maze Car"
     //% group="compass"
     //% weight=70
-    export function get_YAW () {
+    export function get_YAW() {
+        //microbit 
         let ax = input.acceleration(Dimension.X)
         let ay = input.acceleration(Dimension.Y)
         let az = input.acceleration(Dimension.Z)
@@ -1258,6 +1261,31 @@ namespace pksdriver {
         yaw = (yaw + 360) % 360
         // Display yaw (rounded to nearest degree)
         return yaw
+    }
+
+    //% block="set North Point" subcategory="Maze Car"
+    //% group="compass"
+    //% weight=60
+    export function setNorthPoint() {
+        normalPoint = get_YAW();
+    }
+
+    //% block="get angle difference from North Point" subcategory="Maze Car"
+    //% group="compass"
+    //% weight=50
+    export function getAngleDifference() {
+        let currentYaw = get_YAW();
+        let angleDifference = currentYaw - normalPoint;
+
+        // Normalize the angle difference to be within -180 to 180 degrees
+        
+        if (angleDifference > 180) {
+            angleDifference -= 360;
+        } else if (angleDifference < -180) {
+            angleDifference += 360;
+        } 
+        
+        return angleDifference;
     }
 
 }
