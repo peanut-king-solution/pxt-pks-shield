@@ -574,7 +574,7 @@ namespace pksdriver {
     }
 
     /**
-    * Select temperature type (Celsius/Fahrenheit)"
+    * Select temperature type (Celsius/Fahrenheit)
     */
     //% block="temperature type: $temp" subcategory="Smart Living"
     //% group="Temperature and Humidity (DHT11/DHT22)" 
@@ -1237,9 +1237,9 @@ namespace pksdriver {
 
     let normalPoint = 0;
 
-    /*
-    * This function calculates the yaw angle of the device using micro:bit's accelerometer and magnetometer.
-    */
+    /**
+     * This function calculates the yaw angle of the device using micro:bit's accelerometer and magnetometer.
+     */
     //% block="get Yaw(Rotation)" subcategory="Maze Car"
     //% group="compass"
     //% weight=70
@@ -1266,21 +1266,21 @@ namespace pksdriver {
         return yaw
     }
 
-    /*
-    * Sets the current yaw angle as the virtual North Point.
-    */
-    //% block="set North Point" subcategory="Maze Car"
+    /**
+     * Sets the current yaw angle as the virtual North Point.
+     */
+    //% block="set North Point $target_angle" subcategory="Maze Car"
     //% group="compass"
-    //% weight=60
-    export function setNorthPoint() {
-        normalPoint = get_YAW();
+    //% weight=80
+    export function setNorthPoint(target_angle: number = get_YAW()) {
+        normalPoint = target_angle;
     }
 
-    /*
-    * This function calculates the angle difference between the current yaw angle and the set virtual North Point.
-    * It returns the angle difference in degrees within -180 to 180 degrees.
-    * Negative values indicate a counter-clockwise rotation from the North Point,positive values indicate a clockwise rotation.
-    */
+    /**
+     * This function calculates the angle difference between the current yaw angle and the set virtual North Point.
+     * It returns the angle difference in degrees within -180 to 180 degrees.
+     * Negative values indicate a counter-clockwise rotation from the North Point,positive values indicate a clockwise rotation.
+     */
     //% block="get angle difference from North Point" subcategory="Maze Car"
     //% group="compass"
     //% weight=50
@@ -1299,7 +1299,7 @@ namespace pksdriver {
         return angleDifference;
     }
  
-    /*
+    /**
      * Read the virtual North Point set by the user.
      */
     //% block="get virtual North Point" subcategory="Maze Car"
