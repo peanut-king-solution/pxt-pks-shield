@@ -1239,12 +1239,30 @@ namespace pksdriver {
 
     /**
      * This function calculates the yaw angle of the device using micro:bit's accelerometer and magnetometer.
+     * The yaw angle is adjusted by a virtual North Point, which can be set by the user.
+     * It returns the yaw angle in degrees, normalized to be within 0 - 360 degrees.
+     * The yaw angle is the rotation around the vertical axis, which is useful for determining the direction the device is facing.
      */
     //% block="get Yaw(Rotation)" subcategory="Maze Car"
     //% group="compass"
     //% weight=70
     export function get_YAW() {
-        //microbit 
+        let yaw = get_raw_Yaw();
+        yaw = yaw + normalPoint;
+        // Normalize the yaw to be within 0 - 360 degrees
+        if (yaw >= 360) {
+            yaw -= 360;
+        }
+
+        return yaw
+    }
+
+
+    /**
+     * This function calculates the yaw angle of the device using micro:bit's accelerometer and magnetometer.
+     */
+    export function get_raw_Yaw() {
+       //microbit 
         let ax = input.acceleration(Dimension.X)
         let ay = input.acceleration(Dimension.Y)
         let az = input.acceleration(Dimension.Z)
@@ -1262,14 +1280,7 @@ namespace pksdriver {
         let yaw = Math.atan2(y_comp, x_comp) * (180 / Math.PI)
         // Normalize to 0-360°
         yaw = (yaw + 360) % 360
-
-        // This allows the user to set a virtual North Point by shift the yaw by the normalPoint
-        yaw = yaw + normalPoint;
-        // Normalize the yaw to be within 0 - 360 degrees
-        if (yaw >= 360) {
-            yaw -= 360;
-        }
-        return yaw
+        return yaw;
     }
 
     /**
@@ -1279,7 +1290,7 @@ namespace pksdriver {
     //% group="compass"
     //% weight=80
     export function setNorthPoint()  {
-        normalPoint = get_YAW();
+        normalPoint = get_raw_Yaw();
     }
 
     /**
@@ -1291,7 +1302,7 @@ namespace pksdriver {
     //% group="compass"
     //% weight=50
     export function getAngleDifference() {
-        let currentYaw = get_YAW();
+        let currentYaw = get_raw_Yaw();
         let angleDifference = currentYaw - normalPoint;
 
         // Normalize the angle difference to be within -180 to 180 degrees
