@@ -1321,7 +1321,7 @@ namespace pksdriver {
      * It returns the angle difference in degrees within -180 to 180 degrees.
      * Negative values indicate a counter-clockwise rotation from the North Point,positive values indicate a clockwise rotation.
      */
-    //% block="get angle difference $target_angle" subcategory="Maze Car"
+    //% block="get angle difference from $target_angle degree" subcategory="Maze Car"
     //% group="compass"
     //% weight=50
     export function getAngleDifferenceFromVirtualNorthPoint(target_angle: number) {
