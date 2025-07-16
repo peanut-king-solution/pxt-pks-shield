@@ -1325,6 +1325,9 @@ namespace pksdriver {
     //% group="compass"
     //% weight=50
     export function getAngleDifferenceFromVirtualNorthPoint(target_angle: number) {
+        if (target_angle < 0 || target_angle > 360) {
+            target_angle = target_angle % 360; // Normalize target angle to be within 0 - 360 degrees
+        }
         let angleDifference = get_YAW() - target_angle;
 
         // Normalize the angle difference to be within -180 to 180 degrees
