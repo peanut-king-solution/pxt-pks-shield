@@ -1264,11 +1264,9 @@ namespace pksdriver {
         yaw = (yaw + 360) % 360
 
         // This allows the user to set a virtual North Point by shift the yaw by the normalPoint
-        yaw = yaw - normalPoint;
+        yaw = yaw + normalPoint;
         // Normalize the yaw to be within 0 - 360 degrees
-        if (yaw < 0) {
-            yaw += 360;
-        } else if (yaw >= 360) {
+        if (yaw >= 360) {
             yaw -= 360;
         }
         return yaw
