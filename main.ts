@@ -1248,14 +1248,12 @@ namespace pksdriver {
     //% weight=70
     export function get_YAW() {
         let yaw = get_raw_Yaw();
-        yaw = yaw - normalPoint;
-        // Normalize the yaw to be within 0 - 360 degrees
+        //set yaw to be relative to the normalPoint
+        yaw -= normalPoint;
+        // Normalize yaw to be within 0 - 360 degrees
         if (yaw < 0) {
             yaw += 360;
-        } else if (yaw >= 360) {
-            yaw -= 360;
         }
-
         return yaw
     }
 
