@@ -1254,6 +1254,10 @@ namespace pksdriver {
         if (yaw < 0) {
             yaw += 360;
         }
+        //make sure yaw is within 0 - 360 degrees
+        if (yaw >= 360) {
+            yaw -= 360;
+        }
         return yaw
     }
 
