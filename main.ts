@@ -1270,13 +1270,36 @@ namespace pksdriver {
         let ax = input.acceleration(Dimension.X)
         let ay = input.acceleration(Dimension.Y)
         let az = input.acceleration(Dimension.Z)
-        // Calculate pitch and roll (in radians)
-        let pitch = Math.atan2(0 - ax, Math.sqrt(ay * ay + az * az))
-        let roll = Math.atan2(ay, az)
-        // Get magnetometer data
         let mx = input.magneticForce(Dimension.X)
         let my = input.magneticForce(Dimension.Y)
         let mz = input.magneticForce(Dimension.Z)
+        //reduce noise by averaging the accelerometer readings
+        for (let i = 0; i < 10; i++) {
+            ax += input.acceleration(Dimension.X)
+            ay += input.acceleration(Dimension.Y)
+            az += input.acceleration(Dimension.Z)
+            mx += input.magneticForce(Dimension.X)
+            my += input.magneticForce(Dimension.Y)
+            mz += input.magneticForce(Dimension.Z)
+        }
+        ax /= 10
+        ay /= 10
+        az /= 10
+        mx /= 10
+        my /= 10
+        mz /= 10
+        // Normalize accelerometer data
+        ax = ax / 1024 * 9.81; // Convert to g
+        ay = ay / 1024 * 9.81; // Convert to g
+        az = az / 1024 * 9.81; // Convert to g
+        mx = mx / 1024 * 1.3; // Convert to Gauss
+        my = my / 1024 * 1.3; // Convert to Gauss
+        mz = mz / 1024 * 1.3; // Convert to Gauss
+
+        // Calculate pitch and roll (in radians)
+        let pitch = Math.atan2(0 - ax, Math.sqrt(ay * ay + az * az))
+        let roll = Math.atan2(ay, az)
+
         // Tilt compensation
         let x_comp = mx * Math.cos(pitch) + mz * Math.sin(pitch)
         let y_comp = mx * Math.sin(roll) * Math.sin(pitch) + my * Math.cos(roll) - mz * Math.sin(roll) * Math.cos(pitch)
@@ -1284,6 +1307,7 @@ namespace pksdriver {
         let yaw = Math.atan2(y_comp, x_comp) * (180 / Math.PI)
         // Normalize to 0-360°
         yaw = (yaw + 360) % 360
+        
         return yaw;
     }
 
