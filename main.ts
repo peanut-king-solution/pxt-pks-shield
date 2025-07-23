@@ -1469,7 +1469,6 @@ namespace pksdriver {
                 . . . . .
                 . . . . .
                 `)
-            
             }
     }
  
@@ -1479,7 +1478,7 @@ namespace pksdriver {
     //% block="get virtual North Point" subcategory="Maze Car"
     //% group="compass"
     //% weight=60
-    export function getNormalPoint() {
+    export function getNormalPoint(): number {
         return normalPoint;
     }
 
