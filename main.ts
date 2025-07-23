@@ -1324,7 +1324,7 @@ namespace pksdriver {
             let temp = pksdriver.get_raw_Yaw();
             //how to take the average of 20 readings
             temp *= Math.PI / 180; // Convert to radians
-            normalPoint += Math.atan2(Math.sin(temp), Math.cos(temp)); // Average the yaw angle
+            normalPoint += Math.atan2(Math.sin(temp), Math.cos(temp))*180/Math.PI; // Average the yaw angle
         }
         normalPoint = normalPoint / 20.0; // Average the yaw angle over 20 readings
     }
