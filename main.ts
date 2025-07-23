@@ -1320,7 +1320,8 @@ namespace pksdriver {
     export function setNorthPoint() {
         //ma20
         for (let i = 0; i < 20; i++) {
-            normalPoint+= pksdriver.get_YAW();
+            normalPoint += pksdriver.get_raw_Yaw();
+            
         }
         normalPoint = normalPoint / 20; // Average the yaw angle over 20 readings
     }
