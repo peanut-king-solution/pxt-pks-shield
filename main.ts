@@ -1381,20 +1381,23 @@ namespace pksdriver {
     //% group="compass"
     //% weight=60
     //% blockId=get_closest_orientation
-    export function get_closest_orientation() {
+    export function get_closest_orientation():number {
         // Get the current yaw angle
         let temp = get_YAW();
-        if (Math.abs(temp - east) <= 45) {
-            return "East";
+        if (Math.abs(temp - east) < 45) {
+            return east;
         }
-        else if (Math.abs(temp - west) <= 45) {
-            return "West";
+        else if (Math.abs(temp - west) < 45) {
+            return west;
         }
-        else if (Math.abs(temp - north) <= 45) {
-            return "North";
+        else if (Math.abs(temp - north) < 45) {
+            return north;
         }
-        else if (Math.abs(temp - south) <= 45) {
-            return "South";
+        else if (Math.abs(temp - south) < 45) {
+            return south;
+        }
+        else {
+            return temp; // If no close match, return the current yaw angle
         }
     }
 
