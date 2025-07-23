@@ -1394,10 +1394,10 @@ namespace pksdriver {
     export function get_closest_orientation(): number {
         let temp = get_YAW() % 360;
         if (temp < 0) temp += 360; // Ensure positive
-        
+
         function angularDifference(a: number, b: number): number {
-        let diff = Math.abs(a - b) % 360;
-        return diff > 180 ? 360 - diff : diff;
+            let diff = Math.abs(a - b) % 360;
+            return diff > 180 ? 360 - diff : diff;
         }
         // Check proximity to each cardinal direction
         if (angularDifference(temp, north) < 45) {
