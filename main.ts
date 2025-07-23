@@ -1391,23 +1391,25 @@ namespace pksdriver {
     //% group="compass"
     //% weight=40
     //% blockId=get_closest_orientation
-    export function get_closest_orientation():number {
-        // Get the current yaw angle
-        let temp = get_YAW();
-        if (Math.abs(temp - east) < 45) {
-            return east;
+    export function get_closest_orientation(): number {
+        let temp = get_YAW() % 360;
+        if (temp < 0) temp += 360; // Ensure positive
+        
+        function angularDifference(a: number, b: number): number {
+        let diff = Math.abs(a - b) % 360;
+        return diff > 180 ? 360 - diff : diff;
         }
-        else if (Math.abs(temp - west) < 45) {
-            return west;
-        }
-        else if (Math.abs(temp - north) < 45) {
+        // Check proximity to each cardinal direction
+        if (angularDifference(temp, north) < 45) {
             return north;
-        }
-        else if (Math.abs(temp - south) < 45) {
+        } else if (angularDifference(temp, east) < 45) {
+            return east;
+        } else if (angularDifference(temp, south) < 45) {
             return south;
-        }
-        else {
-            return temp; // If no close match, return the current yaw angle
+        } else if (angularDifference(temp, west) < 45) {
+            return west;
+        } else {
+            return temp; // No close match, return current yaw
         }
     }
 
@@ -1455,6 +1457,10 @@ namespace pksdriver {
             `)
         press_count += 1
         if (press_count == 1) {
+            
+            pksdriver.resetNormalPoint();
+            pksdriver.setNorthPoint();
+            north = pksdriver.getNormalPoint();
             basic.showLeds(`
                 . . # . .
                 . # # # .
@@ -1462,17 +1468,8 @@ namespace pksdriver {
                 . . # . .
                 . . # . .
                 `)
-            pksdriver.resetNormalPoint();
-            pksdriver.setNorthPoint();
-            north = pksdriver.getNormalPoint();
         } else if (press_count == 2) {
-            basic.showLeds(`
-                . . # . .
-                . . . # .
-                # # # # #
-                . . . # .
-                . . # . .
-                `)
+            
             east = 0;
             for (let i = 0; i < 20; i++) {
                 let temp = pksdriver.get_YAW();
@@ -1481,15 +1478,15 @@ namespace pksdriver {
                 east += Math.atan2(Math.sin(temp), Math.cos(temp))*180/Math.PI; // Average the yaw angle
             }
             east /= 20;
-            
-        } else if (press_count == 3) {
             basic.showLeds(`
                 . . # . .
-                . . # . .
-                # . # . #
-                . # # # .
+                . . . # .
+                # # # # #
+                . . . # .
                 . . # . .
                 `)
+        } else if (press_count == 3) {
+            
             south = 0;
             for (let i = 0; i < 20; i++) {
                 let temp = pksdriver.get_YAW();
@@ -1497,14 +1494,15 @@ namespace pksdriver {
                 south += Math.atan2(Math.sin(temp), Math.cos(temp))*180/Math.PI; // Average the yaw angle
             }
             south /= 20;
-        } else if (press_count == 4) {
             basic.showLeds(`
                 . . # . .
-                . # . . .
-                # # # # #
-                . # . . .
+                . . # . .
+                # . # . #
+                . # # # .
                 . . # . .
                 `)
+        } else if (press_count == 4) {
+            
             west = 0;
             for (let i = 0; i < 20; i++) {
                 let temp = pksdriver.get_YAW();
@@ -1512,6 +1510,14 @@ namespace pksdriver {
                 west += Math.atan2(Math.sin(temp), Math.cos(temp))*180/Math.PI; // Average the yaw angle
             }
             west /= 20;
+            basic.showLeds(`
+                . . # . .
+                . # . . .
+                # # # # #
+                . # . . .
+                . . # . .
+                `)
+            basis.pasic.pause(500);
             press_count = 0;
             basic.showLeds(`
                 . . . . .
