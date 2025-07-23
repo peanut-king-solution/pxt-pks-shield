@@ -1467,7 +1467,7 @@ namespace pksdriver {
             
             pksdriver.resetNormalPoint();
             pksdriver.setNorthPoint();
-            north = pksdriver.getNormalPoint();
+            north = maFilterYaw(20);
             basic.showLeds(`
                 . . # . .
                 . # # # .
