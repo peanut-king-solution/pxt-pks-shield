@@ -1369,17 +1369,19 @@ namespace pksdriver {
         return angleDifference;
 
     }
+
     let east = 90;
     let west = 270;
     let north = 0;
     let south = 180;
+
     /**
      * This function determines the closest cardinal direction (North, South, East, West) based on the current yaw angle.
      * It returns a string representing the closest orientation.
      */
     //% block="get closest orientation" subcategory="Maze Car"
     //% group="compass"
-    //% weight=60
+    //% weight=40
     //% blockId=get_closest_orientation
     export function get_closest_orientation():number {
         // Get the current yaw angle
@@ -1402,6 +1404,7 @@ namespace pksdriver {
     }
 
     let press_count = 0;
+
     /**
      * This function allows the user to remember the orientation points (North, East, South, West) by pressing a button on the micro:bit.
      * It displays the current point on the LED matrix.
@@ -1409,8 +1412,8 @@ namespace pksdriver {
      */
     //% block="set orientation" subcategory="Maze Car"
     //% group="compass"
-    //% weight=60
-    export function set_orientation() {
+    //% weight=40
+    export function set_orientation(): void {
         
         // set up the four orientation point for precious
         basic.showLeds(`
