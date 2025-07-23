@@ -1456,7 +1456,10 @@ namespace pksdriver {
                 . . # . .
                 . . # . .
                 `)
-            pksdriver.setNorthPoint()
+            for (let i = 0; i < 20; i++) {
+                north+= pksdriver.get_YAW();
+            }
+            north=north/20;
         } else if (press_count == 2) {
             basic.showLeds(`
                 . . # . .
@@ -1465,7 +1468,10 @@ namespace pksdriver {
                 . . . # .
                 . . # . .
                 `)
-            east = pksdriver.get_YAW()
+            for (let i = 0; i < 20; i++) {
+                east += pksdriver.get_YAW();
+            }
+            east = east / 20;
         } else if (press_count == 3) {
             basic.showLeds(`
                 . . # . .
@@ -1474,7 +1480,10 @@ namespace pksdriver {
                 . # # # .
                 . . # . .
                 `)
-            south = pksdriver.get_YAW()
+            for (let i = 0; i < 20; i++) {
+                south += pksdriver.get_YAW();
+            }
+            south = south / 20;
         } else if (press_count == 4) {
             basic.showLeds(`
                 . . # . .
@@ -1483,7 +1492,10 @@ namespace pksdriver {
                 . # . . .
                 . . # . .
                 `)
-            west = pksdriver.get_YAW()
+            for (let i = 0; i < 20; i++) {
+                west += pksdriver.get_YAW();
+            }
+            west = west / 20; 
             press_count = 0
             basic.showLeds(`
                 . . . . .
