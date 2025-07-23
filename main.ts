@@ -1317,8 +1317,12 @@ namespace pksdriver {
     //% block="set North Point" subcategory="Maze Car"
     //% group="compass"
     //% weight=80
-    export function setNorthPoint()  {
-        normalPoint = get_raw_Yaw();
+    export function setNorthPoint() {
+        //ma20
+        for (let i = 0; i < 20; i++) {
+            normalPoint+= pksdriver.get_YAW();
+        }
+        normalPoint = normalPoint / 20; // Average the yaw angle over 20 readings
     }
 
     /**
@@ -1456,10 +1460,8 @@ namespace pksdriver {
                 . . # . .
                 . . # . .
                 `)
-            for (let i = 0; i < 20; i++) {
-                north+= pksdriver.get_YAW();
-            }
-            north=north/20;
+            pksdriver.setNorthPoint();
+            north = pksdriver.getNormalPoint();
         } else if (press_count == 2) {
             basic.showLeds(`
                 . . # . .
