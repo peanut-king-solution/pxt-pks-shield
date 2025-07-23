@@ -1319,11 +1319,14 @@ namespace pksdriver {
     //% weight=80
     export function setNorthPoint() {
         //ma20
+        normalPoint = 0;
         for (let i = 0; i < 20; i++) {
-            normalPoint += pksdriver.get_raw_Yaw();
-            
+            let temp = pksdriver.get_raw_Yaw();
+            //how to take the average of 20 readings
+            temp *= Math.PI / 180; // Convert to radians
+            normalPoint += Math.atan2(Math.sin(temp), Math.cos(temp)); // Average the yaw angle
         }
-        normalPoint = normalPoint / 20; // Average the yaw angle over 20 readings
+        normalPoint = normalPoint / 20.0; // Average the yaw angle over 20 readings
     }
 
     /**
@@ -1374,8 +1377,6 @@ namespace pksdriver {
         return angleDifference;
 
     }
-
-    
 
     let east = 90;
     let west = 270;
@@ -1461,6 +1462,7 @@ namespace pksdriver {
                 . . # . .
                 . . # . .
                 `)
+            pksdriver.resetNormalPoint();
             pksdriver.setNorthPoint();
             north = pksdriver.getNormalPoint();
         } else if (press_count == 2) {
@@ -1471,10 +1473,15 @@ namespace pksdriver {
                 . . . # .
                 . . # . .
                 `)
+            east = 0;
             for (let i = 0; i < 20; i++) {
-                east += pksdriver.get_YAW();
+                let temp = pksdriver.get_YAW();
+                //how to take the average of 20 readings
+                temp *= Math.PI / 180; // Convert to radians
+                east += Math.atan2(Math.sin(temp), Math.cos(temp))*180/Math.PI; // Average the yaw angle
             }
-            east = east / 20;
+            east /= 20;
+            
         } else if (press_count == 3) {
             basic.showLeds(`
                 . . # . .
@@ -1483,10 +1490,13 @@ namespace pksdriver {
                 . # # # .
                 . . # . .
                 `)
+            south = 0;
             for (let i = 0; i < 20; i++) {
-                south += pksdriver.get_YAW();
+                let temp = pksdriver.get_YAW();
+                temp *= Math.PI / 180; // Convert to radians
+                south += Math.atan2(Math.sin(temp), Math.cos(temp))*180/Math.PI; // Average the yaw angle
             }
-            south = south / 20;
+            south /= 20;
         } else if (press_count == 4) {
             basic.showLeds(`
                 . . # . .
@@ -1495,11 +1505,14 @@ namespace pksdriver {
                 . # . . .
                 . . # . .
                 `)
+            west = 0;
             for (let i = 0; i < 20; i++) {
-                west += pksdriver.get_YAW();
+                let temp = pksdriver.get_YAW();
+                temp *= Math.PI / 180; // Convert to radians
+                west += Math.atan2(Math.sin(temp), Math.cos(temp))*180/Math.PI; // Average the yaw angle
             }
-            west = west / 20; 
-            press_count = 0
+            west /= 20;
+            press_count = 0;
             basic.showLeds(`
                 . . . . .
                 . . . . .
@@ -1542,7 +1555,10 @@ namespace pksdriver {
     export function maFilterYaw(ma: number): number {
         let avg = 0;
         for (let i = 0; i < ma; i++) {
-            avg += pksdriver.get_YAW();
+            let temp = pksdriver.get_YAW();
+            //how to take the average of 20 readings
+            temp *= Math.PI / 180; // Convert to radians
+            avg += Math.atan2(Math.sin(temp), Math.cos(temp))*180/Math.PI; // Average the yaw angle
         }
         return avg / ma;
     }
