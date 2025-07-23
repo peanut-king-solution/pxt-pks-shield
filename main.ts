@@ -1517,7 +1517,7 @@ namespace pksdriver {
                 . # . . .
                 . . # . .
                 `)
-            basis.pasic.pause(500);
+            basic.pause(500);
             press_count = 0;
             basic.showLeds(`
                 . . . . .
