@@ -1392,26 +1392,32 @@ namespace pksdriver {
     //% weight=40
     //% blockId=get_closest_orientation
     export function get_closest_orientation(): number {
-        function angleNormalize(angle: number): number {
-            return (angle + 360) % 360; // Normalize angle to be within 0 - 360 degrees
+        // Helper function to compute the smallest angular difference
+        function angularDifference(a: number, b: number): number {
+            const diff = Math.abs(a - b) % 360;
+            return diff > 180 ? 360 - diff : diff;
         }
+        // Array of remembered angles
+        const rememberedAngles = [north, east, south, west];
         // Get the current yaw angle
         let temp = maFilterYaw(20);
-        if (temp < angleNormalize(east + 45) && temp >= angleNormalize(east - 45)) {
-            return east;
+        // Normalize currentAngle to [0, 360)
+        temp = ((temp % 360) + 360) % 360;
+
+        let closestAngle = rememberedAngles[0];
+        let smallestDiff = angularDifference(temp, closestAngle);
+
+        // Compare against all remembered angles
+        for (const angle of rememberedAngles) {
+            const diff = angularDifference(temp, angle);
+            if (diff < smallestDiff) {
+            smallestDiff = diff;
+            closestAngle = angle;
+            }
         }
-        else if (temp < angleNormalize(west + 45) && temp >= angleNormalize(west - 45)) {
-            return west;
-        }
-        else if ((temp < 180 && temp < angleNormalize(north + 45)) || (temp > 180 && temp >= angleNormalize(north - 45))) {
-            return north;
-        }
-        else if (temp < angleNormalize(south + 45) && temp >= angleNormalize(south - 45)) {
-            return south;
-        }
-        else {
-            return temp; // If no close match, return the current yaw angle
-        }
+
+        return closestAngle;
+    
     }
 
     /**
