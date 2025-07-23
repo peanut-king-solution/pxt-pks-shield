@@ -1221,7 +1221,7 @@ namespace pksdriver {
 
 // for maze car's use only
 enum direction { FRONT, BACK, LEFT, RIGHT }
-
+enum cardinal_direction { NORTH, EAST, SOUTH, WEST }
 //% weight=60
 //% color=#1c4980 
 //% icon="\uf2db" 
@@ -1370,6 +1370,8 @@ namespace pksdriver {
 
     }
 
+    
+
     let east = 90;
     let west = 270;
     let north = 0;
@@ -1400,6 +1402,28 @@ namespace pksdriver {
         }
         else {
             return temp; // If no close match, return the current yaw angle
+        }
+    }
+
+    /**
+     * This function returns the yaw angle corresponding to a given cardinal direction.
+     * It returns the yaw angle in degrees, which can be used to set the orientation of the device.
+     */
+    //% block="get cardinal direction %cardinalDirection" subcategory="Maze Car"
+    //% group="compass"
+    //% weight=30
+    export function getCardinalDirection(cardinalDirection: cardinal_direction): number {
+        switch (cardinalDirection) {
+            case cardinal_direction.NORTH:
+                return north;
+            case cardinal_direction.EAST:
+                return east;
+            case cardinal_direction.SOUTH:
+                return south;
+            case cardinal_direction.WEST:
+                return west;
+            default:
+                return get_YAW(); // If no match, return the current yaw angle
         }
     }
 
