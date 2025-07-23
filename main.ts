@@ -1530,6 +1530,22 @@ namespace pksdriver {
         normalPoint = 0;
     }
 
+    /**
+     * This function filters the yaw angle by averaging the last 'ma' readings.
+     * It returns the average yaw angle, which can be used to reduce noise in the yaw readings.
+     * @param ma is the number of readings to average, eg: 20
+     */
+    //% block="filter yaw with $ma readings" subcategory="Maze Car"
+    //% group="compass"
+    //% weight=0
+    export function maFilterYaw(ma: number): number {
+        let avg = 0;
+        for (let i = 0; i < ma; i++) {
+            avg += pksdriver.get_YAW();
+        }
+        return avg / ma;
+    }
+
 }
 
 //ColorSensor
