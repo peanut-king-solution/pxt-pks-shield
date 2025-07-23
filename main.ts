@@ -1367,6 +1367,103 @@ namespace pksdriver {
 
         // Calculate the final angle difference
         return angleDifference;
+
+    }
+    let east = 90;
+    let west = 270;
+    let north = 0;
+    let south = 180;
+    /**
+     * This function determines the closest cardinal direction (North, South, East, West) based on the current yaw angle.
+     * It returns a string representing the closest orientation.
+     */
+    //% block="get closest orientation" subcategory="Maze Car"
+    //% group="compass"
+    //% weight=60
+    //% blockId=get_closest_orientation
+    export function get_closest_orientation() {
+        // Get the current yaw angle
+        let temp = get_YAW();
+        if (Math.abs(temp - east) <= 45) {
+            return "East";
+        }
+        else if (Math.abs(temp - west) <= 45) {
+            return "West";
+        }
+        else if (Math.abs(temp - north) <= 45) {
+            return "North";
+        }
+        else if (Math.abs(temp - south) <= 45) {
+            return "South";
+        }
+    }
+
+    let press_count = 0;
+    /**
+     * This function allows the user to remember the orientation points (North, East, South, West) by pressing a button on the micro:bit.
+     * It displays the current point on the LED matrix.
+     * After setting all four points, the led matrix is cleared and the process is finished.
+     */
+    //% block="set orientation" subcategory="Maze Car"
+    //% group="compass"
+    //% weight=60
+    export function set_orientation() {
+        
+        // set up the four orientation point for precious
+        basic.showLeds(`
+            . . # . .
+            . . . . .
+            # . # . #
+            . . . . .
+            . . # . .
+            `)
+        press_count += 1
+        if (press_count == 1) {
+            basic.showLeds(`
+                . . # . .
+                . # # # .
+                # . # . #
+                . . # . .
+                . . # . .
+                `)
+            pksdriver.setNorthPoint()
+        } else if (press_count == 2) {
+            basic.showLeds(`
+                . . # . .
+                . . . # .
+                # # # # #
+                . . . # .
+                . . # . .
+                `)
+            east = pksdriver.get_YAW()
+        } else if (press_count == 3) {
+            basic.showLeds(`
+                . . # . .
+                . . # . .
+                # . # . #
+                . # # # .
+                . . # . .
+                `)
+            south = pksdriver.get_YAW()
+        } else if (press_count == 4) {
+            basic.showLeds(`
+                . . # . .
+                . # . . .
+                # # # # #
+                . # . . .
+                . . # . .
+                `)
+            west = pksdriver.get_YAW()
+            press_count = 0
+            basic.showLeds(`
+                . . . . .
+                . . . . .
+                . . . . .
+                . . . . .
+                . . . . .
+                . . . . .
+                `)
+            }
     }
  
     /**
