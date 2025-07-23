@@ -1392,24 +1392,25 @@ namespace pksdriver {
     //% weight=40
     //% blockId=get_closest_orientation
     export function get_closest_orientation(): number {
-        let temp = get_YAW() % 360;
-        if (temp < 0) temp += 360; // Ensure positive
-
-        function angularDifference(a: number, b: number): number {
-            let diff = Math.abs(a - b) % 360;
-            return diff > 180 ? 360 - diff : diff;
+        function angleNormalize(angle: number): number {
+            return (angle + 360) % 360; // Normalize angle to be within 0 - 360 degrees
         }
-        // Check proximity to each cardinal direction
-        if (angularDifference(temp, north) < 45) {
-            return north;
-        } else if (angularDifference(temp, east) < 45) {
+        // Get the current yaw angle
+        let temp = maFilterYaw(20);
+        if (temp < angleNormalize(east + 45) && temp >= angleNormalize(east - 45)) {
             return east;
-        } else if (angularDifference(temp, south) < 45) {
-            return south;
-        } else if (angularDifference(temp, west) < 45) {
+        }
+        else if (temp < angleNormalize(west + 45) && temp >= angleNormalize(west - 45)) {
             return west;
-        } else {
-            return temp; // No close match, return current yaw
+        }
+        else if ((temp < 180 && temp < angleNormalize(north + 45)) || (temp > 180 && temp >= angleNormalize(north - 45))) {
+            return north;
+        }
+        else if (temp < angleNormalize(south + 45) && temp >= angleNormalize(south - 45)) {
+            return south;
+        }
+        else {
+            return temp; // If no close match, return the current yaw angle
         }
     }
 
@@ -1469,15 +1470,8 @@ namespace pksdriver {
                 . . # . .
                 `)
         } else if (press_count == 2) {
-            
-            east = 0;
-            for (let i = 0; i < 20; i++) {
-                let temp = pksdriver.get_YAW();
-                //how to take the average of 20 readings
-                temp *= Math.PI / 180; // Convert to radians
-                east += Math.atan2(Math.sin(temp), Math.cos(temp))*180/Math.PI; // Average the yaw angle
-            }
-            east /= 20;
+
+            east = maFilterYaw(20);
             basic.showLeds(`
                 . . # . .
                 . . . # .
@@ -1487,13 +1481,7 @@ namespace pksdriver {
                 `)
         } else if (press_count == 3) {
             
-            south = 0;
-            for (let i = 0; i < 20; i++) {
-                let temp = pksdriver.get_YAW();
-                temp *= Math.PI / 180; // Convert to radians
-                south += Math.atan2(Math.sin(temp), Math.cos(temp))*180/Math.PI; // Average the yaw angle
-            }
-            south /= 20;
+            south = maFilterYaw(20);
             basic.showLeds(`
                 . . # . .
                 . . # . .
@@ -1503,13 +1491,7 @@ namespace pksdriver {
                 `)
         } else if (press_count == 4) {
             
-            west = 0;
-            for (let i = 0; i < 20; i++) {
-                let temp = pksdriver.get_YAW();
-                temp *= Math.PI / 180; // Convert to radians
-                west += Math.atan2(Math.sin(temp), Math.cos(temp))*180/Math.PI; // Average the yaw angle
-            }
-            west /= 20;
+            west=maFilterYaw(20);
             basic.showLeds(`
                 . . # . .
                 . # . . .
@@ -1517,7 +1499,7 @@ namespace pksdriver {
                 . # . . .
                 . . # . .
                 `)
-            basic.pause(500);
+            basic.pause(500)
             press_count = 0;
             basic.showLeds(`
                 . . . . .
