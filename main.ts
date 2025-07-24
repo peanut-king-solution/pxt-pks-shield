@@ -1327,6 +1327,12 @@ namespace pksdriver {
             normalPoint += Math.atan2(Math.sin(temp), Math.cos(temp))*180/Math.PI; // Average the yaw angle
         }
         normalPoint /= 20.0; // Average the yaw angle over 20 readings
+        // Normalize the normalPoint to be within 0 - 360 degrees
+        if (normalPoint < 0) {
+            normalPoint += 360;
+        } else if (normalPoint >= 360) {
+            normalPoint -= 360;
+        }
     }
 
     /**
@@ -1415,6 +1421,10 @@ namespace pksdriver {
             closestAngle = angle;
             }
         }
+
+        // Return the closest angle
+        // Normalize closestAngle to [0, 360)
+        closestAngle = ((closestAngle % 360) + 360) % 360;
 
         return closestAngle;
     
@@ -1554,7 +1564,14 @@ namespace pksdriver {
             temp *= Math.PI / 180; // Convert to radians
             avg += Math.atan2(Math.sin(temp), Math.cos(temp))*180/Math.PI; // Average the yaw angle
         }
-        return avg / ma;
+        avg /= ma;
+        // Normalize the average to be within 0 - 360 degrees
+        if (avg < 0) {
+            avg += 360;
+        } else if (avg >= 360) {
+            avg -= 360;
+        }
+        return avg;
     }
 
 }
