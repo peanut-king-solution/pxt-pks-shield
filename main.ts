@@ -1313,7 +1313,7 @@ namespace pksdriver {
             return yaw;
         } else {
             // Apply Kalman filter
-            kalmanFilterYaw();
+            return kalmanFilterYaw();
         }
     }
 
