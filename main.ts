@@ -1261,54 +1261,71 @@ namespace pksdriver {
         return yaw
     }
 
-
+    let kalmanFilter = true;
+    
     /**
      * This function calculates the yaw angle of the device using micro:bit's accelerometer and magnetometer.
      */
     export function get_raw_Yaw() {
-       //microbit 
-        let ax = input.acceleration(Dimension.X)
-        let ay = input.acceleration(Dimension.Y)
-        let az = input.acceleration(Dimension.Z)
-        let mx = input.magneticForce(Dimension.X)
-        let my = input.magneticForce(Dimension.Y)
-        let mz = input.magneticForce(Dimension.Z)
-        //reduce noise by averaging the accelerometer readings
-        for (let i = 0; i < 10; i++) {
-            ax += input.acceleration(Dimension.X)
-            ay += input.acceleration(Dimension.Y)
-            az += input.acceleration(Dimension.Z)
-            mx += input.magneticForce(Dimension.X)
-            my += input.magneticForce(Dimension.Y)
-            mz += input.magneticForce(Dimension.Z)
+        if (!kalmanFilter) {
+            //microbit 
+            let ax = input.acceleration(Dimension.X)
+            let ay = input.acceleration(Dimension.Y)
+            let az = input.acceleration(Dimension.Z)
+            let mx = input.magneticForce(Dimension.X)
+            let my = input.magneticForce(Dimension.Y)
+            let mz = input.magneticForce(Dimension.Z)
+            //reduce noise by averaging the accelerometer readings
+            for (let i = 0; i < 10; i++) {
+                ax += input.acceleration(Dimension.X)
+                ay += input.acceleration(Dimension.Y)
+                az += input.acceleration(Dimension.Z)
+                mx += input.magneticForce(Dimension.X)
+                my += input.magneticForce(Dimension.Y)
+                mz += input.magneticForce(Dimension.Z)
+            }
+            ax /= 10
+            ay /= 10
+            az /= 10
+            mx /= 10
+            my /= 10
+            mz /= 10
+            // Normalize accelerometer data
+            ax = ax / 1024 * 9.81; // Convert to g
+            ay = ay / 1024 * 9.81; // Convert to g
+            az = az / 1024 * 9.81; // Convert to g
+            mx = mx / 1024 * 1.3; // Convert to Gauss
+            my = my / 1024 * 1.3; // Convert to Gauss
+            mz = mz / 1024 * 1.3; // Convert to Gauss
+
+            // Calculate pitch and roll (in radians)
+            let pitch = Math.atan2(0 - ax, Math.sqrt(ay * ay + az * az))
+            let roll = Math.atan2(ay, az)
+
+            // Tilt compensation
+            let x_comp = mx * Math.cos(pitch) + mz * Math.sin(pitch)
+            let y_comp = mx * Math.sin(roll) * Math.sin(pitch) + my * Math.cos(roll) - mz * Math.sin(roll) * Math.cos(pitch)
+            // Calculate yaw (heading in degrees, 0°-360°)
+            let yaw = Math.atan2(y_comp, x_comp) * (180 / Math.PI)
+            // Normalize to 0-360°
+            yaw = (yaw + 360) % 360
+            
+            return yaw;
+        } else {
+            // Apply Kalman filter
+            kalmanFilterYaw();
         }
-        ax /= 10
-        ay /= 10
-        az /= 10
-        mx /= 10
-        my /= 10
-        mz /= 10
-        // Normalize accelerometer data
-        ax = ax / 1024 * 9.81; // Convert to g
-        ay = ay / 1024 * 9.81; // Convert to g
-        az = az / 1024 * 9.81; // Convert to g
-        mx = mx / 1024 * 1.3; // Convert to Gauss
-        my = my / 1024 * 1.3; // Convert to Gauss
-        mz = mz / 1024 * 1.3; // Convert to Gauss
+    }
 
-        // Calculate pitch and roll (in radians)
-        let pitch = Math.atan2(0 - ax, Math.sqrt(ay * ay + az * az))
-        let roll = Math.atan2(ay, az)
-
-        // Tilt compensation
-        let x_comp = mx * Math.cos(pitch) + mz * Math.sin(pitch)
-        let y_comp = mx * Math.sin(roll) * Math.sin(pitch) + my * Math.cos(roll) - mz * Math.sin(roll) * Math.cos(pitch)
-        // Calculate yaw (heading in degrees, 0°-360°)
-        let yaw = Math.atan2(y_comp, x_comp) * (180 / Math.PI)
-        // Normalize to 0-360°
-        yaw = (yaw + 360) % 360
-        
-        return yaw;
+    /**
+     * This function allows the user to toggle the Kalman filter on or off.
+     * When the Kalman filter is on, it will smooth the yaw angle readings to reduce noise.
+     * When the Kalman filter is off, it will return the raw yaw angle readings.
+     * This can be useful for debugging or for applications where raw data is preferred.
+     * @param kalmanFilter true to enable Kalman filter, false to disable
+     */
+    export function toggleKalmanFilter() {
+        kalmanFilter = !kalmanFilter;
     }
 
     /**
@@ -1572,6 +1589,126 @@ namespace pksdriver {
             avg -= 360;
         }
         return avg;
+    }
+    let lastMagField = 0;
+    let disturbanceThreshold = 50; // Adjust this value based on your environment
+    let magDisturbance = false;
+
+    // Kalman Filter parameters
+    let Q_angle = 0.01;   // Process noise variance
+    let Q_bias = 0.003;   // Bias noise variance
+    let R_measure = 0.1;  // Measurement noise variance
+
+    let angle = 0;       // Estimated yaw angle
+    let bias = 0;         // Estimated gyro bias
+    let P = [[0,0],[0,0]]; // Error covariance matrix
+
+    export function setDisturbanceThreshold(threshold: number) {
+        disturbanceThreshold = threshold;
+    }
+    
+    // Complementary filter
+    let alpha = 0.98;     // Weight for magnetometer (when no disturbance)
+    function checkDisturbance(mag: { x: number, y: number, z: number }): boolean {
+        const fieldStrength = Math.sqrt(mag.x*mag.x + mag.y*mag.y + mag.z*mag.z);
+        const fieldChange = Math.abs(fieldStrength - lastMagField);
+        lastMagField = fieldStrength;
+        
+        if (fieldChange > disturbanceThreshold) {
+            magDisturbance = true;
+            return true;
+        }
+        
+        // Require several stable readings to clear disturbance
+        let stableCount = 0;
+        if (fieldChange < disturbanceThreshold/2) {
+            stableCount++;
+            if (stableCount > 5) {
+                magDisturbance = false;
+                stableCount = 0;
+            }
+        } else {
+            stableCount = 0;
+        }
+
+        return magDisturbance;
+    }
+
+    function kalmanFilterYaw() {
+
+        // Get calibrated magnetometer data
+        const rawMag = input.magneticForce();
+        const offset = { x: 0, y: 0, z: 0 }; // Replace with actual calibration offsets
+        const scale = { x: 1, y: 1, z: 1 }; // Replace with actual calibration scale factors
+        const mag = {
+            x: (rawMag.x - offset.x) * scale.x,
+            y: (rawMag.y - offset.y) * scale.y,
+            z: (rawMag.z - offset.z) * scale.z
+        };
+        
+        // Check for magnetic disturbances
+        const disturbance = checkDisturbance(mag);
+        
+        // Get accelerometer data for tilt compensation
+        const accel = input.acceleration();
+        const pitch = Math.atan2(-accel.x, Math.sqrt(accel.y*accel.y + accel.z*accel.z));
+        const roll = Math.atan2(accel.y, accel.z);
+        
+        // Tilt compensation
+        const x_comp = mag.x * Math.cos(pitch) + mag.z * Math.sin(pitch);
+        const y_comp = mag.x * Math.sin(roll) * Math.sin(pitch) +
+                       mag.y * Math.cos(roll) -
+                       mag.z * Math.sin(roll) * Math.cos(pitch);
+        
+        // Calculate raw yaw
+        let rawYaw = Math.atan2(y_comp, x_comp) * (180 / Math.PI);
+        rawYaw = (rawYaw + 360) % 360;
+        
+        // Get angular rate from accelerometer (pseudo-gyro)
+        const dt = 0.05; // 50ms update rate
+        const accelRate = (accel.y * Math.sin(roll) - accel.x * Math.cos(roll)) * 0.1;
+        let filteredYaw;
+        if (magDisturbance) {
+            // During disturbances, rely more on the accelerometer-derived rate
+            filteredYaw = kalmanUpdate(rawYaw, accelRate, dt);
+            alpha = 0.7; // Less weight to magnetometer
+        } else {
+            // Normal operation
+            filteredYaw = kalmanUpdate(rawYaw, accelRate, dt);
+            alpha = 0.98; // More weight to magnetometer
+        }
+
+        this.filteredYaw = alpha * filteredYaw + (1 - alpha) * filteredYaw;
+        
+        return filteredYaw;
+    }
+
+    function kalmanUpdate(newAngle:number, newRate:number, dt:number): number {
+        // Predict state
+        angle += dt * (newRate - bias);
+        P[0][0] += dt * (dt*P[1][1] - P[0][1] - P[1][0] + Q_angle);
+        P[0][1] -= dt * P[1][1];
+        P[1][0] -= dt * P[1][1];
+        P[1][1] += Q_bias * dt;
+
+        // Calculate Kalman gain
+        const S = P[0][0] + R_measure;
+        const K = [P[0][0]/S, P[1][0]/S];
+
+        // Update estimate
+        const y = newAngle - angle;
+        angle += K[0] * y;
+        bias += K[1] * y;
+
+        // Update covariance
+        const P00_temp = P[0][0];
+        const P01_temp = P[0][1];
+        P[0][0] -= K[0] * P00_temp;
+        P[0][1] -= K[0] * P01_temp;
+        P[1][0] -= K[1] * P00_temp;
+        P[1][1] -= K[1] * P01_temp;
+
+        return angle;
     }
 
 }
