@@ -1682,7 +1682,7 @@ namespace pksdriver {
             alpha = 0.98; // More weight to magnetometer
         }
 
-        this.filteredYaw = alpha * filteredYaw + (1 - alpha) * filteredYaw;
+        filteredYaw = alpha * filteredYaw + (1 - alpha) * filteredYaw;
         
         return filteredYaw;
     }
