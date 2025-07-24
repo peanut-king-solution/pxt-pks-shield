@@ -1637,23 +1637,27 @@ namespace pksdriver {
     function kalmanFilterYaw() {
 
         // Get calibrated magnetometer data
-        const rawMag = input.magneticForce();
+        let ax = input.acceleration(Dimension.X)
+        let ay = input.acceleration(Dimension.Y)
+        let az = input.acceleration(Dimension.Z)
+        let mx = input.magneticForce(Dimension.X)
+        let my = input.magneticForce(Dimension.Y)
+        let mz = input.magneticForce(Dimension.Z)
         const offset = { x: 0, y: 0, z: 0 }; // Replace with actual calibration offsets
         const scale = { x: 1, y: 1, z: 1 }; // Replace with actual calibration scale factors
         const mag = {
-            x: (rawMag.x - offset.x) * scale.x,
-            y: (rawMag.y - offset.y) * scale.y,
-            z: (rawMag.z - offset.z) * scale.z
+            x: (mx - offset.x) * scale.x,
+            y: (my - offset.y) * scale.y,
+            z: (mz - offset.z) * scale.z
         };
         
         // Check for magnetic disturbances
         const disturbance = checkDisturbance(mag);
         
         // Get accelerometer data for tilt compensation
-        const accel = input.acceleration();
-        const pitch = Math.atan2(-accel.x, Math.sqrt(accel.y*accel.y + accel.z*accel.z));
-        const roll = Math.atan2(accel.y, accel.z);
-        
+        const pitch = Math.atan2(-ay, Math.sqrt(ay*ay + az*az));
+        const roll = Math.atan2(ay, az);
+
         // Tilt compensation
         const x_comp = mag.x * Math.cos(pitch) + mag.z * Math.sin(pitch);
         const y_comp = mag.x * Math.sin(roll) * Math.sin(pitch) +
@@ -1666,7 +1670,7 @@ namespace pksdriver {
         
         // Get angular rate from accelerometer (pseudo-gyro)
         const dt = 0.05; // 50ms update rate
-        const accelRate = (accel.y * Math.sin(roll) - accel.x * Math.cos(roll)) * 0.1;
+        const accelRate = (ay * Math.sin(roll) - ax * Math.cos(roll)) * 0.1;
         let filteredYaw;
         if (magDisturbance) {
             // During disturbances, rely more on the accelerometer-derived rate
