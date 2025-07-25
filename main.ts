@@ -1426,8 +1426,10 @@ namespace pksdriver {
         let temp = 0;
         if (target_angle === null) {
             temp = maFilterYaw(20); // Use the filtered yaw angle
+        }else {
+            temp = target_angle; // Use the provided target angle
         }
-        
+
         // Normalize currentAngle to [0, 360)
         temp = ((temp % 360) + 360) % 360;
 
