@@ -1261,7 +1261,7 @@ namespace pksdriver {
         return yaw
     }
 
-    let kalmanFilter = true;
+    let kalmanFilter = false;
     
     /**
      * This function calculates the yaw angle of the device using micro:bit's accelerometer and magnetometer.
