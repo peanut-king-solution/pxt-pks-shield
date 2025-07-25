@@ -1414,7 +1414,7 @@ namespace pksdriver {
     //% group="compass"
     //% weight=40
     //% blockId=get_closest_orientation
-    export function get_closest_orientation(target_angle:number=maFilterYaw(20)): number {
+    export function get_closest_orientation(target_angle:number=null): number {
         // Helper function to compute the smallest angular difference
         function angularDifference(a: number, b: number): number {
             const diff = Math.abs(a - b) % 360;
@@ -1423,7 +1423,11 @@ namespace pksdriver {
         // Array of remembered angles
         const rememberedAngles = [north, east, south, west];
         // Get the current yaw angle
-        let temp = target_angle
+        let temp = 0;
+        if (target_angle === null) {
+            temp = maFilterYaw(20); // Use the filtered yaw angle
+        }
+        
         // Normalize currentAngle to [0, 360)
         temp = ((temp % 360) + 360) % 360;
 
