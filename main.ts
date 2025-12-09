@@ -146,12 +146,12 @@ namespace pksdriver {
      * speed(0~255).
     */
     //% weight=130
-    //% blockId=motor_MotorRun block="motor|%index|dir|%Dir|speed|%speed" subcategory="Edu Kit"
+    //% blockId=motor_motorRun block="motor|%index|dir|%Dir|speed|%speed" subcategory="Edu Kit"
     //% speed.min=0 speed.max=255
     //% index.fieldEditor="gridpicker" index.fieldOptions.columns=2
     //% direction.fieldEditor="gridpicker" direction.fieldOptions.columns=2
     //% group="Motors"
-    export function MotorRun(index: Motors, direction: Dir, speed: number): void {
+    export function motorRun(index: Motors, direction: Dir, speed: number): void {
         if (!initialized) {
             initPCA9685()
         }
@@ -202,7 +202,7 @@ namespace pksdriver {
     //% weight=90
     //% blockId=light_lighton block="light on|%index" subcategory="Smart Living"
     //% group="Lights"
-    export function LightOn(index: Motors): void {
+    export function lightOn(index: Motors): void {
         if (!initialized) {
             initPCA9685()
         }
@@ -230,7 +230,7 @@ namespace pksdriver {
     //% weight=90
     //% blockId=light_lightoff block="light off|%index" subcategory="Smart Living"
     //% group="Lights"
-    export function LightOff(index: Motors) {
+    export function lightOff(index: Motors) {
         setPwm((4 - index) * 2, 0, 0);
         setPwm((4 - index) * 2 + 1, 0, 0);
     }
@@ -304,7 +304,7 @@ namespace pksdriver {
 //% icon="\uf2db" 
 //% block="PKS Drivers"
 namespace pksdriver {
-    function Read(aht20: AHT20): { Humidity: number, Temperature: number } {
+    function read(aht20: AHT20): { Humidity: number, Temperature: number } {
         if (!aht20.GetState().Calibrated) {
             aht20.Initialization();
             if (!aht20.GetState().Calibrated) return null;
@@ -325,7 +325,7 @@ namespace pksdriver {
     //% weight=3
     export function aht20ReadTemperatureC(): number {
         const aht20 = new AHT20();
-        const val = Read(aht20);
+        const val = read(aht20);
         if (val == null) return null;
 
         return val.Temperature;
@@ -336,7 +336,7 @@ namespace pksdriver {
     //% weight=2
     export function aht20ReadTemperatureF(): number {
         const aht20 = new AHT20();
-        const val = Read(aht20);
+        const val = read(aht20);
         if (val == null) return null;
 
         return val.Temperature * 9 / 5 + 32;
@@ -347,7 +347,7 @@ namespace pksdriver {
     //% weight=1
     export function aht20ReadHumidity(): number {
         const aht20 = new AHT20();
-        const val = Read(aht20);
+        const val = read(aht20);
         if (val == null) return null;
 
         return val.Humidity;
@@ -1906,5 +1906,52 @@ namespace pksdriver {
             return color_t.purple
         }return null
 
+    }
+
+    export enum xy_direction {
+        //% block="x_axis"
+        x_axis=0,
+        //% block="y_axis"
+        y_axis=1
+    }
+
+    let stepper_initialized = false;
+    let x_dir_pin_global: AnalogPin = AnalogPin.P8;
+    let x_step_pin_global: AnalogPin = AnalogPin.P12;
+    let y_dir_pin_global: AnalogPin = AnalogPin.P13;
+    let y_step_pin_global: AnalogPin = AnalogPin.P14;
+    //% block="initialize stepper motor with x_dir_pin %x_dir_pin| x_step_pin %x_step_pin| y_dir_pin %y_dir_pin| y_step_pin %y_step_pin" subcategory="Gotcha"
+    //% group="Stepper Motor"
+    //% weight=80
+    //% x_dir_pin.defl=AnalogPin.P8
+    //% x_step_pin.defl=AnalogPin.P12
+    //% y_dir_pin.defl=AnalogPin.P13
+    //% y_step_pin.defl=AnalogPin.P14
+    export function init_stepper_motor(x_dir_pin:AnalogPin=AnalogPin.P8, x_step_pin:AnalogPin=AnalogPin.P12, y_dir_pin:AnalogPin=AnalogPin.P13, y_step_pin:AnalogPin=AnalogPin.P14): void {
+        x_dir_pin_global = x_dir_pin;
+        x_step_pin_global = x_step_pin;
+        y_dir_pin_global = y_dir_pin;
+        y_step_pin_global = y_step_pin;
+        stepper_initialized = true;
+    }
+    
+    /**
+    * gotcha move x y direction 
+    * can choose x axis or y axis to move
+    * and how many steps to move
+    */
+    //% blockId=move_xydirection block="move %xy_direction| %steps steps" subcategory="Gotcha"
+    //% group="Stepper Motor"
+    //% weight=70
+    export function move_xydirection(axis: xy_direction, steps: number): void {
+        pksdriver.lightOn(pksdriver.Motors.M3)
+        if (axis) {pins.digitalWritePin(DigitalPin.P8, 0)} else {pins.digitalWritePin(DigitalPin.P8, 1)}
+        for (let i = 0; i < steps; i++) {
+            pins.analogWritePin(AnalogPin.P12, 1)
+            control.waitMicros(18)
+            pins.analogWritePin(AnalogPin.P12, 0)
+            control.waitMicros(18)
+        }
+        pksdriver.lightOff(pksdriver.Motors.M3)
     }
 }
