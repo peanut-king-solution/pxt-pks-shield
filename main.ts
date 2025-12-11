@@ -1908,41 +1908,54 @@ namespace pksdriver {
 
     }
 
-    export enum xy_direction {
+    export enum xyz_direction {
         //% block="x_axis"
         x_axis=0,
         //% block="y_axis"
-        y_axis=1
+        y_axis=1,
+        //% block="z_axis"
+        z_axis=2
     }
 
     let stepper_initialized = false;
     let x_dir_pin_global: AnalogPin = AnalogPin.P8;
     let x_step_pin_global: AnalogPin = AnalogPin.P12;
     let x_axis_motor_port_global: pksdriver.Motors = pksdriver.Motors.M3;
-    let y_axis_motor_port_global: pksdriver.Motors = pksdriver.Motors.M2;
     let y_dir_pin_global: AnalogPin = AnalogPin.P13;
     let y_step_pin_global: AnalogPin = AnalogPin.P14;
+    let y_axis_motor_port_global: pksdriver.Motors = pksdriver.Motors.M2;
+    let z_dir_pin_global: AnalogPin = AnalogPin.P15;
+    let z_step_pin_global: AnalogPin = AnalogPin.P16;
+    let z_axis_motor_port_global: pksdriver.Motors = pksdriver.Motors.M1;
     let x_step_count = 0;
     let y_step_count = 0;
+    let z_step_count = 0;
     let target_x_steps = 0;
     let target_y_steps = 0;
+    let target_z_steps = 0;
     let moving = false;
-    //% block="initialize stepper motor with x_dir_pin %x_dir_pin| x_step_pin %x_step_pin| y_dir_pin %y_dir_pin| y_step_pin %y_step_pin | x_axis_motor_port %x_axis_motor_port| y_axis_motor_port %y_axis_motor_port" subcategory="Gotcha"
+    //% block="initialize stepper motor with x_dir_pin %x_dir_pin| x_step_pin %x_step_pin| y_dir_pin %y_dir_pin| y_step_pin %y_step_pin | z_dir_pin %z_dir_pin| z_step_pin %z_step_pin | x_axis_motor_port %x_axis_motor_port| y_axis_motor_port %y_axis_motor_port| z_axis_motor_port %z_axis_motor_port" subcategory="Gotcha"
     //% group="Stepper Motor"
     //% weight=80
-    //% x_dir_pin.defl=AnalogPin.P8
-    //% x_step_pin.defl=AnalogPin.P12
-    //% y_dir_pin.defl=AnalogPin.P13
-    //% y_step_pin.defl=AnalogPin.P14
-    //% x_axis_motor_port.defl=pksdriver.Motors.M3
-    //% y_axis_motor_port.defl=pksdriver.Motors.M2
+    //% x_dir_pin=AnalogPin.P8
+    //% x_step_pin=AnalogPin.P12
+    //% y_dir_pin=AnalogPin.P13
+    //% y_step_pin=AnalogPin.P14
+    //% z_dir_pin=AnalogPin.P15
+    //% z_step_pin=AnalogPin.P16
+    //% x_axis_motor_port=pksdriver.Motors.M3
+    //% y_axis_motor_port=pksdriver.Motors.M2
+    //% z_axis_motor_port=pksdriver.Motors.M1
     export function init_stepper_motor(
         x_dir_pin:AnalogPin=AnalogPin.P8,
         x_step_pin:AnalogPin=AnalogPin.P12,
         y_dir_pin:AnalogPin=AnalogPin.P13,
         y_step_pin:AnalogPin=AnalogPin.P14,
+        z_dir_pin:AnalogPin=AnalogPin.P15,
+        z_step_pin:AnalogPin=AnalogPin.P16,
         x_axis_motor_port:pksdriver.Motors=pksdriver.Motors.M3,
         y_axis_motor_port:pksdriver.Motors=pksdriver.Motors.M2,
+        z_axis_motor_port:pksdriver.Motors=pksdriver.Motors.M1
     ): void {
             x_dir_pin_global = x_dir_pin;
             x_step_pin_global = x_step_pin;
@@ -1950,6 +1963,9 @@ namespace pksdriver {
             y_dir_pin_global = y_dir_pin;
             y_step_pin_global = y_step_pin;
             y_axis_motor_port_global = y_axis_motor_port;
+            z_dir_pin_global = z_dir_pin;
+            z_step_pin_global = z_step_pin;
+            z_axis_motor_port_global = z_axis_motor_port;
             stepper_initialized = true;
     }
 
@@ -1960,8 +1976,8 @@ namespace pksdriver {
     //% group="Stepper Motor"
     //% weight=65
     export function init_position(): void {
-        move_xydirection(xy_direction.x_axis, -100000);
-        move_xydirection(xy_direction.y_axis, 100000);
+        move_xydirection(xyz_direction.x_axis, -100000);
+        move_xydirection(xyz_direction.y_axis, 100000);
     }
 
     /**
@@ -1989,15 +2005,20 @@ namespace pksdriver {
     //% blockId=move_xydirection block="move %xy_direction| %steps steps" subcategory="Gotcha"
     //% group="Stepper Motor"
     //% weight=70
-    export function move_xydirection(axis: xy_direction, steps: number): void {
-        if (axis) {
+    export function move_xydirection(axis: xyz_direction, steps: number): void {
+        if (axis==xyz_direction.x_axis) {
+            //x axis
+            target_x_steps += steps;
+            pksdriver.lightOn(x_axis_motor_port_global)
+            
+        } else if (axis==xyz_direction.y_axis) {
             //y axis
             target_y_steps += steps;
             pksdriver.lightOn(y_axis_motor_port_global)
         } else {
-            //x axis
-            target_x_steps += steps;
-            pksdriver.lightOn(x_axis_motor_port_global)
+            //z axis
+            target_z_steps += steps;
+            pksdriver.lightOn(z_axis_motor_port_global)
         }
         if (!moving) {
             moving = true
@@ -2006,7 +2027,7 @@ namespace pksdriver {
     }
 
     function moveMotors(){
-        while (target_x_steps != 0 || target_y_steps != 0) {
+        while (target_x_steps != 0 || target_y_steps != 0 || target_z_steps != 0) {
             if (target_x_steps != 0) {
                 //move x axis
                 pins.digitalWritePin(x_dir_pin_global, (target_x_steps > 0) ? 1 : 0);
@@ -2020,6 +2041,13 @@ namespace pksdriver {
                 pins.digitalWritePin(y_step_pin_global, 1)
             } else {
                 pksdriver.lightOff(y_axis_motor_port_global)
+            }
+            if (target_z_steps != 0) {
+                //move z axis
+                pins.digitalWritePin(z_dir_pin_global, (target_z_steps > 0) ? 1 : 0);
+                pins.digitalWritePin(z_step_pin_global, 1)
+            } else {
+                pksdriver.lightOff(z_axis_motor_port_global)
             }
             control.waitMicros(15);
             if (target_x_steps != 0) {
@@ -2042,10 +2070,21 @@ namespace pksdriver {
                     target_y_steps++;
                 }
             }
+            if (target_z_steps != 0) {
+                pins.digitalWritePin(z_step_pin_global, 0)
+                if (target_z_steps > 0) {
+                    z_step_count++;
+                    target_z_steps--;
+                } else {
+                    z_step_count--;
+                    target_z_steps++;
+                }
+            }
             control.waitMicros(15);
         }
         moving = false
         pksdriver.lightOff(x_axis_motor_port_global)
         pksdriver.lightOff(y_axis_motor_port_global)
+        pksdriver.lightOff(z_axis_motor_port_global)
     }
 }
