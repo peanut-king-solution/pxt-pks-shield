@@ -1937,15 +1937,15 @@ namespace pksdriver {
     //% block="initialize stepper motor with x_dir_pin %x_dir_pin| x_step_pin %x_step_pin| y_dir_pin %y_dir_pin| y_step_pin %y_step_pin | z_dir_pin %z_dir_pin| z_step_pin %z_step_pin | x_axis_motor_port %x_axis_motor_port| y_axis_motor_port %y_axis_motor_port| z_axis_motor_port %z_axis_motor_port" subcategory="Gotcha"
     //% group="Stepper Motor"
     //% weight=80
-    //% x_dir_pin=AnalogPin.P8
-    //% x_step_pin=AnalogPin.P12
-    //% y_dir_pin=AnalogPin.P13
-    //% y_step_pin=AnalogPin.P14
-    //% z_dir_pin=AnalogPin.P15
-    //% z_step_pin=AnalogPin.P16
-    //% x_axis_motor_port=pksdriver.Motors.M3
-    //% y_axis_motor_port=pksdriver.Motors.M2
-    //% z_axis_motor_port=pksdriver.Motors.M1
+    //% x_dir_pin.defl=AnalogPin.P8
+    //% x_step_pin.defl=AnalogPin.P12
+    //% y_dir_pin.defl=AnalogPin.P13
+    //% y_step_pin.defl=AnalogPin.P14
+    //% z_dir_pin.defl=AnalogPin.P15
+    //% z_step_pin.defl=AnalogPin.P16
+    //% x_axis_motor_port.defl=pksdriver.Motors.M3
+    //% y_axis_motor_port.defl=pksdriver.Motors.M2
+    //% z_axis_motor_port.defl=pksdriver.Motors.M1
     export function init_stepper_motor(
         x_dir_pin:AnalogPin=AnalogPin.P8,
         x_step_pin:AnalogPin=AnalogPin.P12,
@@ -1996,6 +1996,13 @@ namespace pksdriver {
         return y_step_count;
     }
 
+    /**
+     * get z steps
+    */
+    //% blockId=get_z_steps block="Z steps" subcategory="Gotcha"
+    export function get_z_steps(): number {
+        return z_step_count;
+    }
     
     /**
     * gotcha move x y direction 
