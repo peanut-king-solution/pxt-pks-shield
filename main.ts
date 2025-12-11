@@ -1927,6 +1927,7 @@ namespace pksdriver {
     let target_x_steps = 0;
     let target_y_steps = 0;
     let moving = false;
+    //% block="initialize stepper motor with x_dir_pin %x_dir_pin| x_step_pin %x_step_pin| y_dir_pin %y_dir_pin| y_step_pin %y_step_pin | x_axis_motor_port %x_axis_motor_port| y_axis_motor_port %y_axis_motor_port" subcategory="Gotcha"
     //% group="Stepper Motor"
     //% weight=80
     //% x_dir_pin.defl=AnalogPin.P8
