@@ -1262,7 +1262,7 @@ namespace pksdriver {
     }
 
     let kalmanFilter = false;
-    
+
     /**
      * This function calculates the yaw angle of the device using micro:bit's accelerometer and magnetometer.
      */
@@ -1309,7 +1309,7 @@ namespace pksdriver {
             let yaw = Math.atan2(y_comp, x_comp) * (180 / Math.PI)
             // Normalize to 0-360°
             yaw = (yaw + 360) % 360
-            
+
             return yaw;
         } else {
             // Apply Kalman filter
@@ -1341,7 +1341,7 @@ namespace pksdriver {
             let temp = pksdriver.get_raw_Yaw();
             //how to take the average of 20 readings
             temp *= Math.PI / 180; // Convert to radians
-            normalPoint += Math.atan2(Math.sin(temp), Math.cos(temp))*180/Math.PI; // Average the yaw angle
+            normalPoint += Math.atan2(Math.sin(temp), Math.cos(temp)) * 180 / Math.PI; // Average the yaw angle
         }
         normalPoint /= 20.0; // Average the yaw angle over 20 readings
         // Normalize the normalPoint to be within 0 - 360 degrees
@@ -1365,13 +1365,13 @@ namespace pksdriver {
         let angleDifference = currentYaw - normalPoint;
 
         // Normalize the angle difference to be within -180 to 180 degrees
-        
+
         if (angleDifference > 180) {
             angleDifference -= 360;
         } else if (angleDifference < -180) {
             angleDifference += 360;
-        } 
-        
+        }
+
         return angleDifference;
     }
 
@@ -1394,7 +1394,7 @@ namespace pksdriver {
             angleDifference -= 360;
         } else if (angleDifference < -180) {
             angleDifference += 360;
-        } 
+        }
 
         // Calculate the final angle difference
         return angleDifference;
@@ -1414,7 +1414,7 @@ namespace pksdriver {
     //% group="compass"
     //% weight=40
     //% blockId=get_closest_orientation
-    export function get_closest_orientation(target_angle:number=null): number {
+    export function get_closest_orientation(target_angle: number = null): number {
         // Helper function to compute the smallest angular difference
         function angularDifference(a: number, b: number): number {
             const diff = Math.abs(a - b) % 360;
@@ -1426,7 +1426,7 @@ namespace pksdriver {
         let temp = 0;
         if (target_angle === null) {
             temp = maFilterYaw(20); // Use the filtered yaw angle
-        }else {
+        } else {
             temp = target_angle; // Use the provided target angle
         }
 
@@ -1440,8 +1440,8 @@ namespace pksdriver {
         for (const angle of rememberedAngles) {
             const diff = angularDifference(temp, angle);
             if (diff < smallestDiff) {
-            smallestDiff = diff;
-            closestAngle = angle;
+                smallestDiff = diff;
+                closestAngle = angle;
             }
         }
 
@@ -1450,7 +1450,7 @@ namespace pksdriver {
         closestAngle = ((closestAngle % 360) + 360) % 360;
 
         return closestAngle;
-    
+
     }
 
     /**
@@ -1486,7 +1486,7 @@ namespace pksdriver {
     //% group="compass"
     //% weight=40
     export function set_orientation(): void {
-        
+
         // set up the four orientation point for precious
         basic.showLeds(`
             . . # . .
@@ -1497,7 +1497,7 @@ namespace pksdriver {
             `)
         press_count += 1
         if (press_count == 1) {
-            
+
             pksdriver.resetNormalPoint();
             pksdriver.setNorthPoint();
             north = maFilterYaw(20);
@@ -1519,7 +1519,7 @@ namespace pksdriver {
                 . . # . .
                 `)
         } else if (press_count == 3) {
-            
+
             south = maFilterYaw(20);
             basic.showLeds(`
                 . . # . .
@@ -1529,8 +1529,8 @@ namespace pksdriver {
                 . . # . .
                 `)
         } else if (press_count == 4) {
-            
-            west=maFilterYaw(20);
+
+            west = maFilterYaw(20);
             basic.showLeds(`
                 . . # . .
                 . # . . .
@@ -1548,9 +1548,9 @@ namespace pksdriver {
                 . . . . .
                 . . . . .
                 `)
-            }
+        }
     }
- 
+
     /**
      * Read the virtual North Point set by the user.
      */
@@ -1585,7 +1585,7 @@ namespace pksdriver {
             let temp = pksdriver.get_YAW();
             //how to take the average of 20 readings
             temp *= Math.PI / 180; // Convert to radians
-            avg += Math.atan2(Math.sin(temp), Math.cos(temp))*180/Math.PI; // Average the yaw angle
+            avg += Math.atan2(Math.sin(temp), Math.cos(temp)) * 180 / Math.PI; // Average the yaw angle
         }
         avg /= ma;
         // Normalize the average to be within 0 - 360 degrees
@@ -1607,27 +1607,27 @@ namespace pksdriver {
 
     let angle = 0;       // Estimated yaw angle
     let bias = 0;         // Estimated gyro bias
-    let P = [[0,0],[0,0]]; // Error covariance matrix
+    let P = [[0, 0], [0, 0]]; // Error covariance matrix
 
     export function setDisturbanceThreshold(threshold: number) {
         disturbanceThreshold = threshold;
     }
-    
+
     // Complementary filter
     let alpha = 0.98;     // Weight for magnetometer (when no disturbance)
     function checkDisturbance(mag: { x: number, y: number, z: number }): boolean {
-        const fieldStrength = Math.sqrt(mag.x*mag.x + mag.y*mag.y + mag.z*mag.z);
+        const fieldStrength = Math.sqrt(mag.x * mag.x + mag.y * mag.y + mag.z * mag.z);
         const fieldChange = Math.abs(fieldStrength - lastMagField);
         lastMagField = fieldStrength;
-        
+
         if (fieldChange > disturbanceThreshold) {
             magDisturbance = true;
             return true;
         }
-        
+
         // Require several stable readings to clear disturbance
         let stableCount = 0;
-        if (fieldChange < disturbanceThreshold/2) {
+        if (fieldChange < disturbanceThreshold / 2) {
             stableCount++;
             if (stableCount > 5) {
                 magDisturbance = false;
@@ -1656,24 +1656,24 @@ namespace pksdriver {
             y: (my - offset.y) * scale.y,
             z: (mz - offset.z) * scale.z
         };
-        
+
         // Check for magnetic disturbances
         const disturbance = checkDisturbance(mag);
-        
+
         // Get accelerometer data for tilt compensation
-        const pitch = Math.atan2(-ay, Math.sqrt(ay*ay + az*az));
+        const pitch = Math.atan2(-ay, Math.sqrt(ay * ay + az * az));
         const roll = Math.atan2(ay, az);
 
         // Tilt compensation
         const x_comp = mag.x * Math.cos(pitch) + mag.z * Math.sin(pitch);
         const y_comp = mag.x * Math.sin(roll) * Math.sin(pitch) +
-                       mag.y * Math.cos(roll) -
-                       mag.z * Math.sin(roll) * Math.cos(pitch);
-        
+            mag.y * Math.cos(roll) -
+            mag.z * Math.sin(roll) * Math.cos(pitch);
+
         // Calculate raw yaw
         let rawYaw = Math.atan2(y_comp, x_comp) * (180 / Math.PI);
         rawYaw = (rawYaw + 360) % 360;
-        
+
         // Get angular rate from accelerometer (pseudo-gyro)
         const dt = 0.05; // 50ms update rate
         const accelRate = (ay * Math.sin(roll) - ax * Math.cos(roll)) * 0.1;
@@ -1689,21 +1689,21 @@ namespace pksdriver {
         }
 
         filteredYaw = alpha * filteredYaw + (1 - alpha) * filteredYaw;
-        
+
         return filteredYaw;
     }
 
-    function kalmanUpdate(newAngle:number, newRate:number, dt:number): number {
+    function kalmanUpdate(newAngle: number, newRate: number, dt: number): number {
         // Predict state
         angle += dt * (newRate - bias);
-        P[0][0] += dt * (dt*P[1][1] - P[0][1] - P[1][0] + Q_angle);
+        P[0][0] += dt * (dt * P[1][1] - P[0][1] - P[1][0] + Q_angle);
         P[0][1] -= dt * P[1][1];
         P[1][0] -= dt * P[1][1];
         P[1][1] += Q_bias * dt;
 
         // Calculate Kalman gain
         const S = P[0][0] + R_measure;
-        const K = [P[0][0]/S, P[1][0]/S];
+        const K = [P[0][0] / S, P[1][0] / S];
 
         // Update estimate
         const y = newAngle - angle;
@@ -1728,9 +1728,9 @@ namespace pksdriver {
 //% color=#1c4980 
 //% icon="\uf2db" 
 //% block="PKS Drivers"
-namespace pksdriver { 
+namespace pksdriver {
 
-    enum Color{
+    enum Color {
         //i2c addr
         ADDR = 0x11,
         //data commend addr
@@ -1761,10 +1761,10 @@ namespace pksdriver {
     //    uint8_t b;                                //
     //} rgb_t;                                      //    
     //////////////////////////////////////////////////
-    
-    
+
+
     //Color Sensor
-    export enum RGB{
+    export enum RGB {
         //% block="red_value"
         r,
         //% block="green_value"
@@ -1773,7 +1773,7 @@ namespace pksdriver {
         b
     }
 
-    export enum RGBC{
+    export enum RGBC {
         //% block="clear_light_value"
         c,
         //% block="red_light_value"
@@ -1784,7 +1784,7 @@ namespace pksdriver {
         b
     }
 
-    export enum HSL{
+    export enum HSL {
         //% block="hue"
         h,
         //% block="saturation"
@@ -1793,10 +1793,10 @@ namespace pksdriver {
         l
     }
 
-    export enum color_t{
-        black=0,  white,  gray,
-        red,      green,   blue, 
-        yellow,cyan,purple
+    export enum color_t {
+        black = 0, white, gray,
+        red, green, blue,
+        yellow, cyan, purple
     }
 
     /**
@@ -1805,12 +1805,12 @@ namespace pksdriver {
     //% blockId=readhsl block="readHSL $hslchoose" subcategory="Edu Kit"
     //% group="Colors"
     //% weight=80
-    export function readhsl(hslchoose:HSL):number {
+    export function readhsl(hslchoose: HSL): number {
         pins.i2cWriteNumber(Color.ADDR, Color.HSL, NumberFormat.UInt8BE, false);
         let hsl = pins.i2cReadBuffer(Color.ADDR, 4, false);
-        let temp = [hsl.getNumber(NumberFormat.UInt16LE,0), //h
-                    hsl.getNumber(NumberFormat.UInt8LE, 2), //s
-                    hsl.getNumber(NumberFormat.UInt8LE, 3)] //l
+        let temp = [hsl.getNumber(NumberFormat.UInt16LE, 0), //h
+        hsl.getNumber(NumberFormat.UInt8LE, 2), //s
+        hsl.getNumber(NumberFormat.UInt8LE, 3)] //l
         return temp[hslchoose]
     }
 
@@ -1820,28 +1820,28 @@ namespace pksdriver {
     //% blockId=readrgb block="readRGB $rgbchoose" subcategory="Edu Kit"
     //% group="Colors"
     //% weight=60
-    export function readrgb(rgbchoose:RGB):number {
+    export function readrgb(rgbchoose: RGB): number {
         pins.i2cWriteNumber(Color.ADDR, Color.RGB, NumberFormat.UInt8BE, false);
         let rgb = pins.i2cReadBuffer(Color.ADDR, 3, false);
-        let temp = [rgb.getNumber(NumberFormat.UInt8LE,0),  //r
-                    rgb.getNumber(NumberFormat.UInt8LE,1),  //g
-                    rgb.getNumber(NumberFormat.UInt8LE,2)]  //b
+        let temp = [rgb.getNumber(NumberFormat.UInt8LE, 0),  //r
+        rgb.getNumber(NumberFormat.UInt8LE, 1),  //g
+        rgb.getNumber(NumberFormat.UInt8LE, 2)]  //b
         return temp[rgbchoose]
-    }   
-    
+    }
+
     /**
     * RGBC read function
     */
     //% blockId=readrgbc block="readRGBC $choose" subcategory="Edu Kit"
     //% group="Colors"
     //% weight=70
-    export function readrgbc(choose:RGBC): number {
+    export function readrgbc(choose: RGBC): number {
         pins.i2cWriteNumber(Color.ADDR, Color.RGBC, NumberFormat.UInt8BE, false);
-        let rgbc = pins.i2cReadBuffer(Color.ADDR, 16, false);                   
-        let temp = [rgbc.getNumber(NumberFormat.UInt32LE, 0 ),  //c                 
-                    rgbc.getNumber(NumberFormat.UInt32LE, 4 ),  //r             
-                    rgbc.getNumber(NumberFormat.UInt32LE, 8 ),  //g             
-                    rgbc.getNumber(NumberFormat.UInt32LE, 12)]  //b
+        let rgbc = pins.i2cReadBuffer(Color.ADDR, 16, false);
+        let temp = [rgbc.getNumber(NumberFormat.UInt32LE, 0),  //c                 
+        rgbc.getNumber(NumberFormat.UInt32LE, 4),  //r             
+        rgbc.getNumber(NumberFormat.UInt32LE, 8),  //g             
+        rgbc.getNumber(NumberFormat.UInt32LE, 12)]  //b
         return temp[choose]
     }
 
@@ -1851,9 +1851,9 @@ namespace pksdriver {
     //% blockId=readcolor block="readColor" subcategory="Edu Kit"
     //% group="Colors"
     //% weight=70
-    export function readcolor():color_t {
+    export function readcolor(): color_t {
         pins.i2cWriteNumber(Color.ADDR, Color.COLOR, NumberFormat.UInt8BE, false);
-        return pins.i2cReadBuffer(Color.ADDR, 1, false).getNumber(NumberFormat.UInt8LE,0);
+        return pins.i2cReadBuffer(Color.ADDR, 1, false).getNumber(NumberFormat.UInt8LE, 0);
     }
 
     /**
@@ -1865,7 +1865,7 @@ namespace pksdriver {
     export function checkReadColor(color: color_t): boolean {
         return readcolor() == color
     }
-    
+
     /**
     * check get color
     */
@@ -1876,7 +1876,7 @@ namespace pksdriver {
         return getcolor() == color
     }
 
-    function diff(a:number, b:number):number {
+    function diff(a: number, b: number): number {
         return Math.abs(a - b);
     }
 
@@ -1886,12 +1886,12 @@ namespace pksdriver {
     //% blockId=getcolor block="getColor" subcategory="Edu Kit"
     //% group="Colors"
     //% weight=70
-    export function getcolor() :number{
+    export function getcolor(): number {
         pins.i2cWriteNumber(Color.ADDR, Color.HSL, NumberFormat.UInt8BE, false);
         let hsl = pins.i2cReadBuffer(Color.ADDR, 4, false);
-        let temp1 =[hsl.getNumber(NumberFormat.UInt16LE, 0), //h
-                    hsl.getNumber(NumberFormat.UInt8LE, 2), //s
-                    hsl.getNumber(NumberFormat.UInt8LE, 3)] //l
+        let temp1 = [hsl.getNumber(NumberFormat.UInt16LE, 0), //h
+        hsl.getNumber(NumberFormat.UInt8LE, 2), //s
+        hsl.getNumber(NumberFormat.UInt8LE, 3)] //l
         if (temp1[HSL.h] > 330 || temp1[HSL.h] < 30) {
             return color_t.red
         } else if (temp1[pksdriver.HSL.h] >= 30 && temp1[HSL.h] < 90) {
@@ -1904,38 +1904,39 @@ namespace pksdriver {
             return color_t.blue
         } else if (temp1[HSL.h] >= 210 && temp1[HSL.h] < 330) {
             return color_t.purple
-        }return null
+        } return null
 
     }
 
     export enum xyz_direction {
-        //% block="x_axis"
-        x_axis=0,
-        //% block="y_axis"
-        y_axis=1,
-        //% block="z_axis"
-        z_axis=2
+        //% block="x axis"
+        x_axis = 0,
+        //% block="y axis"
+        y_axis = 1,
+        //% block="z axis"
+        z_axis = 2
     }
 
     let stepper_initialized = false;
-    let x_dir_pin_global: AnalogPin = AnalogPin.P8;
-    let x_step_pin_global: AnalogPin = AnalogPin.P12;
-    let x_axis_motor_port_global: pksdriver.Motors = pksdriver.Motors.M3;
-    let y_dir_pin_global: AnalogPin = AnalogPin.P13;
-    let y_step_pin_global: AnalogPin = AnalogPin.P14;
-    let y_axis_motor_port_global: pksdriver.Motors = pksdriver.Motors.M2;
-    let z_dir_pin_global: AnalogPin = AnalogPin.P15;
-    let z_step_pin_global: AnalogPin = AnalogPin.P16;
-    let z_axis_motor_port_global: pksdriver.Motors = pksdriver.Motors.M1;
-    let x_step_count = 0;
-    let y_step_count = 0;
-    let z_step_count = 0;
+    //construct 
+    class StepperMotor {
+        constructor(
+            public dir_pin: AnalogPin,
+            public step_pin: AnalogPin,
+            public motor_port: pksdriver.Motors,
+            public step_count: number = 0,
+
+        ) { }
+    }
+    let x_axis_stepper_motor: StepperMotor = new StepperMotor(AnalogPin.P8, AnalogPin.P12, pksdriver.Motors.M3);
+    let y_axis_stepper_motor: StepperMotor = new StepperMotor(AnalogPin.P13, AnalogPin.P14, pksdriver.Motors.M2);
+    let z_axis_stepper_motor: StepperMotor = new StepperMotor(AnalogPin.P15, AnalogPin.P16, pksdriver.Motors.M1);
     let target_x_steps = 0;
     let target_y_steps = 0;
     let target_z_steps = 0;
     let moving = false;
-    //% block="initialize stepper motor with x_dir_pin %x_dir_pin| x_step_pin %x_step_pin| y_dir_pin %y_dir_pin| y_step_pin %y_step_pin | z_dir_pin %z_dir_pin| z_step_pin %z_step_pin | x_axis_motor_port %x_axis_motor_port| y_axis_motor_port %y_axis_motor_port| z_axis_motor_port %z_axis_motor_port" subcategory="Gotcha"
-    //% group="Stepper Motor"
+    //% block="initialize stepper motor with | x_dir_pin %x_dir_pin| x_step_pin %x_step_pin| y_dir_pin %y_dir_pin| y_step_pin %y_step_pin | z_dir_pin %z_dir_pin| z_step_pin %z_step_pin | x_axis_motor_port %x_axis_motor_port| y_axis_motor_port %y_axis_motor_port| z_axis_motor_port %z_axis_motor_port" subcategory="Gotcha"
+    //% group="Initialization"
     //% weight=80
     //% x_dir_pin.defl=AnalogPin.P8
     //% x_step_pin.defl=AnalogPin.P12
@@ -1947,151 +1948,115 @@ namespace pksdriver {
     //% y_axis_motor_port.defl=pksdriver.Motors.M2
     //% z_axis_motor_port.defl=pksdriver.Motors.M1
     export function init_stepper_motor(
-        x_dir_pin:AnalogPin=AnalogPin.P8,
-        x_step_pin:AnalogPin=AnalogPin.P12,
-        y_dir_pin:AnalogPin=AnalogPin.P13,
-        y_step_pin:AnalogPin=AnalogPin.P14,
-        z_dir_pin:AnalogPin=AnalogPin.P15,
-        z_step_pin:AnalogPin=AnalogPin.P16,
-        x_axis_motor_port:pksdriver.Motors=pksdriver.Motors.M3,
-        y_axis_motor_port:pksdriver.Motors=pksdriver.Motors.M2,
-        z_axis_motor_port:pksdriver.Motors=pksdriver.Motors.M1
+        x_dir_pin: AnalogPin = AnalogPin.P8,
+        x_step_pin: AnalogPin = AnalogPin.P12,
+        y_dir_pin: AnalogPin = AnalogPin.P13,
+        y_step_pin: AnalogPin = AnalogPin.P14,
+        z_dir_pin: AnalogPin = AnalogPin.P15,
+        z_step_pin: AnalogPin = AnalogPin.P16,
+        x_axis_motor_port: pksdriver.Motors = pksdriver.Motors.M3,
+        y_axis_motor_port: pksdriver.Motors = pksdriver.Motors.M2,
+        z_axis_motor_port: pksdriver.Motors = pksdriver.Motors.M1
     ): void {
-            x_dir_pin_global = x_dir_pin;
-            x_step_pin_global = x_step_pin;
-            x_axis_motor_port_global = x_axis_motor_port;
-            y_dir_pin_global = y_dir_pin;
-            y_step_pin_global = y_step_pin;
-            y_axis_motor_port_global = y_axis_motor_port;
-            z_dir_pin_global = z_dir_pin;
-            z_step_pin_global = z_step_pin;
-            z_axis_motor_port_global = z_axis_motor_port;
-            stepper_initialized = true;
+        x_axis_stepper_motor = new StepperMotor(x_dir_pin, x_step_pin, x_axis_motor_port);
+        y_axis_stepper_motor = new StepperMotor(y_dir_pin, y_step_pin, y_axis_motor_port);
+        z_axis_stepper_motor = new StepperMotor(z_dir_pin, z_step_pin, z_axis_motor_port);
     }
+
+
 
     /**
     * gotcha init position
     */
     //% blockId=init_position block="position zero" subcategory="Gotcha"
-    //% group="Stepper Motor"
+    //% group="Initialization"
     //% weight=65
     export function init_position(): void {
-        move_xydirection(xyz_direction.x_axis, -100000);
-        move_xydirection(xyz_direction.y_axis, 100000);
+        move_xyzdirection(xyz_direction.x_axis, -100000);
+        move_xyzdirection(xyz_direction.y_axis, -100000);
+        move_xyzdirection(xyz_direction.z_axis, -100000);
     }
 
     /**
-     * get x steps
+     * get steps by axis
     */
-    //% blockId=get_x_steps block="X steps" subcategory="Gotcha"
-    export function get_x_steps(): number {
-        return x_step_count;
+    //% blockId=get_steps block="Get %xyz_direction| axis steps" subcategory="Gotcha"
+    //
+    export function getSteps(axis: xyz_direction): number {
+        return getMotorByAxis(axis).step_count;
     }
 
     /**
-     * get y steps
+     * gotcha motor on
+     * set axis to turn on motor
+     * set direction to 1 or 0
     */
-    //% blockId=get_y_steps block="Y steps" subcategory="Gotcha"
-    export function get_y_steps(): number {
-        return y_step_count;
+    // direction : 0 is one direction, 1 is the other direction provide slider
+    //% blockId=setAxisMotorOn block="Set %xyz_direction| motor On with direction %direction" subcategory="Gotcha"
+    //% group="Stepper Motor"
+    //% weight=60
+    //% direction.min=0 direction.max=1
+    //% direction.defl=0
+    export function setAxisMotorOn(axis: xyz_direction, direction: number): void {
+        let stepper_motor: StepperMotor;
+        if (axis == xyz_direction.x_axis) {
+            stepper_motor = x_axis_stepper_motor;
+        } else if (axis == xyz_direction.y_axis) {
+            stepper_motor = y_axis_stepper_motor;
+        } else {
+            stepper_motor = z_axis_stepper_motor;
+        }
+        pksdriver.lightOn(stepper_motor.motor_port)
+        pins.digitalWritePin(stepper_motor.dir_pin, (direction == 0) ? 0 : 1);
+        pins.analogSetPeriod(stepper_motor.step_pin, 38)
+        pins.analogWritePin(stepper_motor.step_pin, 512)
     }
 
-    /**
-     * get z steps
-    */
-    //% blockId=get_z_steps block="Z steps" subcategory="Gotcha"
-    export function get_z_steps(): number {
-        return z_step_count;
+    //% blockId=setAxisMotorOff block="Set %xyz_direction| motor off" subcategory="Gotcha"
+    export function setAxisMotorOff(axis: xyz_direction): void {
+        let stepper_motor: StepperMotor = getMotorByAxis(axis);
+        pksdriver.lightOff(stepper_motor.motor_port)
+        pins.analogWritePin(stepper_motor.step_pin, 0)
     }
-    
+
+    function getMotorByAxis(axis: xyz_direction): StepperMotor {
+        if (axis == xyz_direction.x_axis) {
+            return x_axis_stepper_motor;
+        } else if (axis == xyz_direction.y_axis) {
+            return y_axis_stepper_motor;
+        } else {
+            return z_axis_stepper_motor;
+        }
+    }
+
+
     /**
     * gotcha move x y direction 
     * can choose x axis or y axis to move
     * and how many steps to move
     */
-    //% blockId=move_xydirection block="move %xy_direction| %steps steps" subcategory="Gotcha"
+    //% blockId=move_xyzdirection block="move %xyzdirection| steps %steps " subcategory="Gotcha"
     //% group="Stepper Motor"
     //% weight=70
-    export function move_xydirection(axis: xyz_direction, steps: number): void {
-        if (axis==xyz_direction.x_axis) {
-            //x axis
-            target_x_steps += steps;
-            pksdriver.lightOn(x_axis_motor_port_global)
-            
-        } else if (axis==xyz_direction.y_axis) {
-            //y axis
-            target_y_steps += steps;
-            pksdriver.lightOn(y_axis_motor_port_global)
-        } else {
-            //z axis
-            target_z_steps += steps;
-            pksdriver.lightOn(z_axis_motor_port_global)
+    export function move_xyzdirection(axis: xyz_direction, steps: number): void {
+        let stepper_motor: StepperMotor = getMotorByAxis(axis);
+        pksdriver.lightOn(stepper_motor.motor_port)
+        pins.digitalWritePin(stepper_motor.dir_pin, steps > 0 ? 0 : 1);
+        steps = Math.abs(steps);
+        while (steps--) {
+            //pins.setPull(stepper_motor.step_pin, PinPullMode.PullUp);
+            pins.digitalWritePin(stepper_motor.step_pin, 1);
+            control.waitMicros(15);
+            //pins.setPull(stepper_motor.step_pin, PinPullMode.PullDown);
+            pins.digitalWritePin(stepper_motor.step_pin, 0);
+            control.waitMicros(15);
         }
-        if (!moving) {
-            moving = true
-            control.inBackground(moveMotors);
-        }
+        pksdriver.lightOff(stepper_motor.motor_port)
+
+        //if (!moving) {
+        //    moving = true
+        //    control.inBackground(moveMotors);
+        //}
     }
 
-    function moveMotors(){
-        while (target_x_steps != 0 || target_y_steps != 0 || target_z_steps != 0) {
-            if (target_x_steps != 0) {
-                //move x axis
-                pins.digitalWritePin(x_dir_pin_global, (target_x_steps > 0) ? 1 : 0);
-                pins.digitalWritePin(x_step_pin_global, 1)
-            } else {
-                pksdriver.lightOff(x_axis_motor_port_global)
-            }
-            if (target_y_steps != 0) {
-                //move y axis
-                pins.digitalWritePin(y_dir_pin_global, (target_y_steps > 0) ? 1 : 0);
-                pins.digitalWritePin(y_step_pin_global, 1)
-            } else {
-                pksdriver.lightOff(y_axis_motor_port_global)
-            }
-            if (target_z_steps != 0) {
-                //move z axis
-                pins.digitalWritePin(z_dir_pin_global, (target_z_steps > 0) ? 1 : 0);
-                pins.digitalWritePin(z_step_pin_global, 1)
-            } else {
-                pksdriver.lightOff(z_axis_motor_port_global)
-            }
-            control.waitMicros(15);
-            if (target_x_steps != 0) {
-                pins.digitalWritePin(x_step_pin_global, 0)
-                if (target_x_steps > 0) {
-                    x_step_count++;
-                    target_x_steps--;
-                } else {
-                    x_step_count--;
-                    target_x_steps++;
-                }
-            }
-            if (target_y_steps != 0) {
-                pins.digitalWritePin(y_step_pin_global, 0)
-                if (target_y_steps > 0) {
-                    y_step_count++;
-                    target_y_steps--;
-                } else {
-                    y_step_count--;
-                    target_y_steps++;
-                }
-            }
-            if (target_z_steps != 0) {
-                pins.digitalWritePin(z_step_pin_global, 0)
-                if (target_z_steps > 0) {
-                    z_step_count++;
-                    target_z_steps--;
-                } else {
-                    z_step_count--;
-                    target_z_steps++;
-                }
-            }
-            control.waitMicros(15);
-        }
-        moving = false
-        pksdriver.lightOff(x_axis_motor_port_global)
-        pksdriver.lightOff(y_axis_motor_port_global)
-        pksdriver.lightOff(z_axis_motor_port_global)
-    }
 }
