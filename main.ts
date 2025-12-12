@@ -1921,20 +1921,94 @@ namespace pksdriver {
     //construct 
     class StepperMotor {
         constructor(
-            public dir_pin: AnalogPin,
-            public step_pin: AnalogPin,
+            public dir_pin: shield_pins,
+            public step_pin: shield_pins,
             public motor_port: pksdriver.Motors,
             public step_count: number = 0,
+            private pin_type_servo: number = 0
+        ) {
+            //check if pin set used servo pins
+            if (this.dir_pin == shield_pins.S1 || this.dir_pin == shield_pins.S2 || this.dir_pin == shield_pins.S3 || this.dir_pin == shield_pins.S4 || this.dir_pin == shield_pins.S5 || this.dir_pin == shield_pins.S6 || this.dir_pin == shield_pins.S7 || this.dir_pin == shield_pins.S8) {
+                this.pin_type_servo = 1; //servo pin
+            } else {
+                this.pin_type_servo = 0; //analog pin
+            }
+        }
 
-        ) { }
+        public keep_rotate(dir: number): void {
+            pksdriver.lightOn(this.motor_port);
+            if (!this.pin_type_servo) {
+                pins.digitalWritePin(this.dir_pin, (dir == 0) ? 0 : 1);
+                pins.analogSetPeriod(this.step_pin, 38)
+                pins.analogWritePin(this.step_pin, 512)
+            }
+        }
+
+        public stop_rotate(): void {
+            if (!this.pin_type_servo) {
+                pins.analogWritePin(this.step_pin, 0)
+            }
+            pksdriver.lightOff(this.motor_port);
+        }
+
+        public step(steps: number): void {
+            if (!this.pin_type_servo) {
+                let dir = steps >= 0 ? 1 : 0;
+                pins.digitalWritePin(this.dir_pin, dir);
+                this.step_count += steps;
+                steps = Math.abs(steps);
+                pksdriver.lightOn(this.motor_port);
+                while (steps--) {
+                    pins.digitalWritePin(this.step_pin, 1);
+                    control.waitMicros(18);
+                    pins.digitalWritePin(this.step_pin, 0);
+                    control.waitMicros(18);
+                }
+                pksdriver.lightOff(this.motor_port);
+            }
+        }
     }
-    let x_axis_stepper_motor: StepperMotor = new StepperMotor(AnalogPin.P8, AnalogPin.P12, pksdriver.Motors.M3);
-    let y_axis_stepper_motor: StepperMotor = new StepperMotor(AnalogPin.P13, AnalogPin.P14, pksdriver.Motors.M2);
-    let z_axis_stepper_motor: StepperMotor = new StepperMotor(AnalogPin.P15, AnalogPin.P16, pksdriver.Motors.M1);
-    let target_x_steps = 0;
-    let target_y_steps = 0;
-    let target_z_steps = 0;
-    let moving = false;
+
+    export enum shield_pins {
+        //% block="P0"
+        P0 = AnalogPin.P0,
+        //% block="P1"
+        P1 = AnalogPin.P1,
+        //% block="P2"
+        P2 = AnalogPin.P2,
+        //% block="P8"
+        P8 = AnalogPin.P8,
+        //% block="P12"
+        P12 = AnalogPin.P12,
+        //% block="P13"
+        P13 = AnalogPin.P13,
+        //% block="P14"
+        P14 = AnalogPin.P14,
+        //% block="P15"
+        P15 = AnalogPin.P15,
+        //% block="P16"
+        P16 = AnalogPin.P16,
+        //% block="S1"
+        S1 = Servos.S1,
+        //% block="S2"
+        S2 = Servos.S2,
+        //% block="S3"
+        S3 = Servos.S3,
+        //% block="S4"
+        S4 = Servos.S4,
+        //% block="S5"
+        S5 = Servos.S5,
+        //% block="S6"
+        S6 = Servos.S6,
+        //% block="S7"
+        S7 = Servos.S7,
+        //% block="S8"
+        S8 = Servos.S8
+    }
+    let x_axis_stepper_motor: StepperMotor = new StepperMotor(shield_pins.P8, shield_pins.P12, pksdriver.Motors.M3);
+    let y_axis_stepper_motor: StepperMotor = new StepperMotor(shield_pins.P13, shield_pins.P14, pksdriver.Motors.M2);
+    let z_axis_stepper_motor: StepperMotor = new StepperMotor(shield_pins.P15, shield_pins.P16, pksdriver.Motors.M1);
+    let stepper_array: StepperMotor[] = [x_axis_stepper_motor, y_axis_stepper_motor, z_axis_stepper_motor];
     //% block="initialize stepper motor with | x_dir_pin %x_dir_pin| x_step_pin %x_step_pin| y_dir_pin %y_dir_pin| y_step_pin %y_step_pin | z_dir_pin %z_dir_pin| z_step_pin %z_step_pin | x_axis_motor_port %x_axis_motor_port| y_axis_motor_port %y_axis_motor_port| z_axis_motor_port %z_axis_motor_port" subcategory="Gotcha"
     //% group="Initialization"
     //% weight=80
@@ -1947,13 +2021,13 @@ namespace pksdriver {
     //% x_axis_motor_port.defl=pksdriver.Motors.M3
     //% y_axis_motor_port.defl=pksdriver.Motors.M2
     //% z_axis_motor_port.defl=pksdriver.Motors.M1
-    export function init_stepper_motor( 
-        x_dir_pin: AnalogPin = AnalogPin.P8,
-        x_step_pin: AnalogPin = AnalogPin.P12,
-        y_dir_pin: AnalogPin = AnalogPin.P13,
-        y_step_pin: AnalogPin = AnalogPin.P14,
-        z_dir_pin: AnalogPin = AnalogPin.P15,
-        z_step_pin: AnalogPin = AnalogPin.P16,
+    export function init_stepper_motor(
+        x_dir_pin: shield_pins = shield_pins.P8,
+        x_step_pin: shield_pins = shield_pins.P12,
+        y_dir_pin: shield_pins = shield_pins.P13,
+        y_step_pin: shield_pins = shield_pins.P14,
+        z_dir_pin: shield_pins = shield_pins.P15,
+        z_step_pin: shield_pins = shield_pins.P16,
         x_axis_motor_port: pksdriver.Motors = pksdriver.Motors.M3,
         y_axis_motor_port: pksdriver.Motors = pksdriver.Motors.M2,
         z_axis_motor_port: pksdriver.Motors = pksdriver.Motors.M1
@@ -1963,8 +2037,6 @@ namespace pksdriver {
         z_axis_stepper_motor = new StepperMotor(z_dir_pin, z_step_pin, z_axis_motor_port);
     }
 
-
-
     /**
     * gotcha init position
     */
@@ -1972,9 +2044,17 @@ namespace pksdriver {
     //% group="Initialization"
     //% weight=65
     export function init_position(): void {
-        move_xyzdirection(xyz_direction.x_axis, -100000);
-        move_xyzdirection(xyz_direction.y_axis, -100000);
-        move_xyzdirection(xyz_direction.z_axis, -100000);
+        for (let i = 0; i < stepper_array.length; i++ ) {
+            if (stepper_array[i].step_count > 0) {
+                move_xyzdirection(i, -stepper_array[i].step_count);
+            } else if (stepper_array[i].step_count < 0) {
+                move_xyzdirection(i, -stepper_array[i].step_count);
+            }
+        }
+        //move_xyzdirection(xyz_direction.x_axis, 200000);
+        //move_xyzdirection(xyz_direction.y_axis, 200000);
+        
+        //move_xyzdirection(xyz_direction.z_axis, 100000);
     }
 
     /**
@@ -1983,7 +2063,7 @@ namespace pksdriver {
     //% blockId=get_steps block="Get %xyz_direction| axis steps" subcategory="Gotcha"
     //
     export function getSteps(axis: xyz_direction): number {
-        return getMotorByAxis(axis).step_count;
+        return stepper_array[axis].step_count;
     }
 
     /**
@@ -1998,37 +2078,14 @@ namespace pksdriver {
     //% direction.min=0 direction.max=1
     //% direction.defl=0
     export function setAxisMotorOn(axis: xyz_direction, direction: number): void {
-        let stepper_motor: StepperMotor;
-        if (axis == xyz_direction.x_axis) {
-            stepper_motor = x_axis_stepper_motor;
-        } else if (axis == xyz_direction.y_axis) {
-            stepper_motor = y_axis_stepper_motor;
-        } else {
-            stepper_motor = z_axis_stepper_motor;
-        }
-        pksdriver.lightOn(stepper_motor.motor_port)
-        pins.digitalWritePin(stepper_motor.dir_pin, (direction == 0) ? 0 : 1);
-        pins.analogSetPeriod(stepper_motor.step_pin, 38)
-        pins.analogWritePin(stepper_motor.step_pin, 512)
+        stepper_array[axis].keep_rotate(direction);
+
     }
 
     //% blockId=setAxisMotorOff block="Set %xyz_direction| motor off" subcategory="Gotcha"
     export function setAxisMotorOff(axis: xyz_direction): void {
-        let stepper_motor: StepperMotor = getMotorByAxis(axis);
-        pksdriver.lightOff(stepper_motor.motor_port)
-        pins.analogWritePin(stepper_motor.step_pin, 0)
+        stepper_array[axis].stop_rotate();
     }
-
-    function getMotorByAxis(axis: xyz_direction): StepperMotor {
-        if (axis == xyz_direction.x_axis) {
-            return x_axis_stepper_motor;
-        } else if (axis == xyz_direction.y_axis) {
-            return y_axis_stepper_motor;
-        } else {
-            return z_axis_stepper_motor;
-        }
-    }
-
 
     /**
     * gotcha move x y direction 
@@ -2039,20 +2096,7 @@ namespace pksdriver {
     //% group="Stepper Motor"
     //% weight=70
     export function move_xyzdirection(axis: xyz_direction, steps: number): void {
-        let stepper_motor: StepperMotor = getMotorByAxis(axis);
-        pksdriver.lightOn(stepper_motor.motor_port)
-        pins.digitalWritePin(stepper_motor.dir_pin, steps > 0 ? 0 : 1);
-        steps = Math.abs(steps);
-        while (steps--) {
-            //pins.setPull(stepper_motor.step_pin, PinPullMode.PullUp);
-            pins.digitalWritePin(stepper_motor.step_pin, 1);
-            control.waitMicros(15);
-            //pins.setPull(stepper_motor.step_pin, PinPullMode.PullDown);
-            pins.digitalWritePin(stepper_motor.step_pin, 0);
-            control.waitMicros(15);
-        }
-        pksdriver.lightOff(stepper_motor.motor_port)
-
+        stepper_array[axis].step(steps);
         //if (!moving) {
         //    moving = true
         //    control.inBackground(moveMotors);
