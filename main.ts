@@ -1947,7 +1947,7 @@ namespace pksdriver {
     //% x_axis_motor_port.defl=pksdriver.Motors.M3
     //% y_axis_motor_port.defl=pksdriver.Motors.M2
     //% z_axis_motor_port.defl=pksdriver.Motors.M1
-    export function init_stepper_motor(
+    export function init_stepper_motor( 
         x_dir_pin: AnalogPin = AnalogPin.P8,
         x_step_pin: AnalogPin = AnalogPin.P12,
         y_dir_pin: AnalogPin = AnalogPin.P13,
