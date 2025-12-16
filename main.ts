@@ -1925,7 +1925,10 @@ namespace pksdriver {
             public step_pin: shield_pins,
             public motor_port: pksdriver.Motors,
             public step_count: number = 0,
+            private max_step: number = 20000,
+            private min_step: number = 0,
             private pin_type_servo: number = 0
+
         ) {
             //check if pin set used servo pins
             if (this.dir_pin == shield_pins.S1 || this.dir_pin == shield_pins.S2 || this.dir_pin == shield_pins.S3 || this.dir_pin == shield_pins.S4 || this.dir_pin == shield_pins.S5 || this.dir_pin == shield_pins.S6 || this.dir_pin == shield_pins.S7 || this.dir_pin == shield_pins.S8) {
@@ -1933,6 +1936,14 @@ namespace pksdriver {
             } else {
                 this.pin_type_servo = 0; //analog pin
             }
+        }
+
+        public setMaxStepCount(max_steps: number): void {
+            this.max_step = max_steps;
+        }
+
+        public setMinStepCount(min_steps: number): void {
+            this.min_step = min_steps;
         }
 
         public keep_rotate(dir: number): void {
@@ -1955,16 +1966,26 @@ namespace pksdriver {
             if (!this.pin_type_servo) {
                 let dir = steps >= 0 ? 1 : 0;
                 pins.digitalWritePin(this.dir_pin, dir);
-                this.step_count += steps;
-                steps = Math.abs(steps);
-                pksdriver.lightOn(this.motor_port);
-                while (steps--) {
-                    pins.digitalWritePin(this.step_pin, 1);
-                    control.waitMicros(18);
-                    pins.digitalWritePin(this.step_pin, 0);
-                    control.waitMicros(18);
+                if ((this.step_count + steps) > this.max_step || (this.step_count + steps) < this.min_step) {
+                    if (dir) {
+                        steps = this.max_step - this.step_count;
+                    } else {
+                        steps = this.min_step - this.step_count;
+                    }
                 }
-                pksdriver.lightOff(this.motor_port);
+                if (steps){
+                    this.step_count += steps;
+                    steps = Math.abs(steps);
+
+                    pksdriver.lightOn(this.motor_port);
+                    while (steps--) {
+                        pins.digitalWritePin(this.step_pin, 1);
+                        control.waitMicros(100);
+                        pins.digitalWritePin(this.step_pin, 0);
+                        control.waitMicros(100);
+                    }
+                    pksdriver.lightOff(this.motor_port);
+                }
             }
         }
     }
@@ -2038,13 +2059,33 @@ namespace pksdriver {
     }
 
     /**
+    * set maximum steps
+    */
+    //% blockId=set_Maximum_Steps block="set %xyz_direction| axis maximum steps %max_steps" subcategory="Gotcha"
+    //% group="Initialization"
+    //% weight=75
+    export function set_Maximum_Steps(axis: xyz_direction, max_steps: number): void {
+        stepper_array[axis].setMaxStepCount(max_steps);
+    }
+
+    /**
+    * set minimum steps
+    */
+    //% blockId=set_Minimum_Steps block="set %xyz_direction| axis minimum steps %min_steps" subcategory="Gotcha"
+    //% group="Initialization"
+    //% weight=70
+    export function set_Minimum_Steps(axis: xyz_direction, min_steps: number): void {
+        stepper_array[axis].setMinStepCount(min_steps);
+    }
+
+    /**
     * gotcha init position
     */
     //% blockId=init_position block="position zero" subcategory="Gotcha"
     //% group="Initialization"
     //% weight=65
     export function init_position(): void {
-        for (let i = 0; i < stepper_array.length; i++ ) {
+        for (let i = 0; i < stepper_array.length; i++) {
             if (stepper_array[i].step_count > 0) {
                 move_xyzdirection(i, -stepper_array[i].step_count);
             } else if (stepper_array[i].step_count < 0) {
@@ -2053,7 +2094,7 @@ namespace pksdriver {
         }
         //move_xyzdirection(xyz_direction.x_axis, 200000);
         //move_xyzdirection(xyz_direction.y_axis, 200000);
-        
+
         //move_xyzdirection(xyz_direction.z_axis, 100000);
     }
 
