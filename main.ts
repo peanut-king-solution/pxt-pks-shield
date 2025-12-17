@@ -1925,8 +1925,11 @@ namespace pksdriver {
             public step_pin: shield_pins,
             public motor_port: pksdriver.Motors,
             public step_count: number = 0,
-            private max_step: number = 20000,
-            private min_step: number = 0,
+            private current_dir: number = 0,//1 or 0
+            private max_step_count: number = 30000,
+            private min_step_count: number = 0,
+            private step_time_count: number = 0,
+            private step_time : number = 0,
             private pin_type_servo: number = 0
 
         ) {
@@ -1939,50 +1942,56 @@ namespace pksdriver {
         }
 
         public setMaxStepCount(max_steps: number): void {
-            this.max_step = max_steps;
+            this.max_step_count = max_steps;
         }
 
         public setMinStepCount(min_steps: number): void {
-            this.min_step = min_steps;
+            this.min_step_count = min_steps;
         }
 
         public keep_rotate(dir: number): void {
             pksdriver.lightOn(this.motor_port);
+            this.step_time= control.millis();
             if (!this.pin_type_servo) {
                 pins.digitalWritePin(this.dir_pin, (dir == 0) ? 0 : 1);
                 pins.analogSetPeriod(this.step_pin, 38)
                 pins.analogWritePin(this.step_pin, 512)
             }
+            this.current_dir = dir;
+
         }
 
         public stop_rotate(): void {
             if (!this.pin_type_servo) {
                 pins.analogWritePin(this.step_pin, 0)
             }
+            const time_use= control.millis() - this.step_time;
+            this.step_time_count += (this.current_dir == 0 ? time_use : -time_use);
             pksdriver.lightOff(this.motor_port);
         }
 
         public step(steps: number): void {
             if (!this.pin_type_servo) {
-                let dir = steps >= 0 ? 1 : 0;
-                pins.digitalWritePin(this.dir_pin, dir);
-                if ((this.step_count + steps) > this.max_step || (this.step_count + steps) < this.min_step) {
-                    if (dir) {
-                        steps = this.max_step - this.step_count;
-                    } else {
-                        steps = this.min_step - this.step_count;
+                let dir = steps <= 0 ? 1 : 0;
+
+                if (steps) {
+                    if (this.step_count + steps > this.max_step_count) {
+                        steps = this.max_step_count - this.step_count;
+                        this.step_count = this.max_step_count;
+                    } else if (this.step_count + steps < this.min_step_count) {
+                        //find the minimum steps can go
+                        steps = this.min_step_count - this.step_count;
+                        this.step_count = this.min_step_count;
                     }
-                }
-                if (steps){
                     this.step_count += steps;
                     steps = Math.abs(steps);
-
+                    pins.digitalWritePin(this.dir_pin, dir);
                     pksdriver.lightOn(this.motor_port);
                     while (steps--) {
                         pins.digitalWritePin(this.step_pin, 1);
-                        control.waitMicros(100);
+                        control.waitMicros(10);
                         pins.digitalWritePin(this.step_pin, 0);
-                        control.waitMicros(100);
+                        control.waitMicros(50);
                     }
                     pksdriver.lightOff(this.motor_port);
                 }
@@ -2086,12 +2095,11 @@ namespace pksdriver {
     //% weight=65
     export function init_position(): void {
         for (let i = 0; i < stepper_array.length; i++) {
-            if (stepper_array[i].step_count > 0) {
-                move_xyzdirection(i, -stepper_array[i].step_count);
-            } else if (stepper_array[i].step_count < 0) {
+            if (stepper_array[i].step_count) {
                 move_xyzdirection(i, -stepper_array[i].step_count);
             }
         }
+
         //move_xyzdirection(xyz_direction.x_axis, 200000);
         //move_xyzdirection(xyz_direction.y_axis, 200000);
 
@@ -2101,7 +2109,7 @@ namespace pksdriver {
     /**
      * get steps by axis
     */
-    //% blockId=get_steps block="Get %xyz_direction| axis steps" subcategory="Gotcha"
+    //% blockId=get_steps block="%xyz_direction| steps" subcategory="Gotcha"
     //
     export function getSteps(axis: xyz_direction): number {
         return stepper_array[axis].step_count;
