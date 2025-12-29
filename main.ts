@@ -65,7 +65,7 @@ namespace pksdriver {
 
     function setFreq(freq: number): void {
         // Constrain the frequency
-        let prescaleval = 25000000;
+        let prescaleval = 250000000;
         prescaleval /= 4096;
         prescaleval /= freq;
         prescaleval -= 1;
@@ -110,6 +110,14 @@ namespace pksdriver {
         let v_us = (degree * 1800 / 180 + 600) // 0.6ms ~ 2.4ms
         let value = v_us * 4096 / 20000
         setPwm(index + 7, 0, value)
+    }
+
+    export function servoPWM(index: Servos, pwm: number): void {
+        if (!initialized) {
+            initPCA9685()
+        }
+        //0 to 255
+        setPwm(index + 7, 0, pwm)
     }
 
     /**
@@ -295,6 +303,251 @@ namespace pksdriver {
             temp += 1;
         }
         return temp;
+    }
+
+    
+    export enum xyz_direction {
+        //% block="x axis"
+        x_axis = 0,
+        //% block="y axis"
+        y_axis = 1,
+        //% block="z axis"
+        z_axis = 2
+    }
+
+    let stepper_initialized = false;
+    //construct 
+    class StepperMotor {
+        constructor(
+            public dir_pin: shield_pins,
+            public step_pin: shield_pins,
+            public motor_port: pksdriver.Motors,
+            public step_count: number = 0,
+            private max_step_count: number = 30000,
+            private min_step_count: number = 0,
+            private step_time_count: number = 0,
+            private step_time : number = 0,
+            private pin_type_servo: number = 0,
+            public dir_pin_servo: Servos= null,
+            public step_pin_servo: Servos= null,
+        ) {
+            //check if pin set used servo pins
+            if (this.dir_pin == shield_pins.S1 || this.dir_pin == shield_pins.S2 || this.dir_pin == shield_pins.S3 || this.dir_pin == shield_pins.S4 || this.dir_pin == shield_pins.S5 || this.dir_pin == shield_pins.S6 || this.dir_pin == shield_pins.S7 || this.dir_pin == shield_pins.S8) {
+                this.pin_type_servo = 1; //servo pin
+            } else {
+                this.dir_pin_servo = this.dir_pin as any as Servos;
+                this.step_pin_servo = this.step_pin as any as Servos;
+                this.pin_type_servo = 0; //analog pin
+            }
+        }
+
+        public setMaxStepCount(max_steps: number): void {
+            this.max_step_count = max_steps;
+        }
+
+        public setMinStepCount(min_steps: number): void {
+            this.min_step_count = min_steps;
+        }
+
+        public keep_rotate(dir: number): void {
+            pksdriver.lightOn(this.motor_port);
+            if (!this.pin_type_servo) {
+                pins.digitalWritePin(this.dir_pin, (dir == 0) ? 0 : 1);
+                pins.analogSetPeriod(this.step_pin, 38)
+                pins.analogWritePin(this.step_pin, 512)
+            }
+
+        }
+
+        public stop_rotate(): void {
+            if (!this.pin_type_servo) {
+                pins.analogWritePin(this.step_pin, 0)
+            }
+            pksdriver.lightOff(this.motor_port);
+        }
+
+        public step(steps: number): void {
+            if (!this.pin_type_servo) {
+                let dir = steps <= 0 ? 1 : 0;
+
+                if (steps) {
+                    if (this.step_count + steps > this.max_step_count) {
+                        steps = this.max_step_count - this.step_count;
+                        this.step_count = this.max_step_count;
+                    } else if (this.step_count + steps < this.min_step_count) {
+                        //find the minimum steps can go
+                        steps = this.min_step_count - this.step_count;
+                        this.step_count = this.min_step_count;
+                    }
+                    this.step_count += steps;
+                    steps = Math.abs(steps);
+                    pins.digitalWritePin(this.dir_pin, dir);
+                    pksdriver.lightOn(this.motor_port);
+                    while (steps--) {
+                        pins.digitalWritePin(this.step_pin, 1);
+                        control.waitMicros(10);
+                        pins.digitalWritePin(this.step_pin, 0);
+                        control.waitMicros(50);
+                    }
+                    pksdriver.lightOff(this.motor_port);
+                }
+            }
+        }
+    }
+
+    export enum shield_pins {
+        //% block="P0"
+        P0 = AnalogPin.P0,
+        //% block="P1"
+        P1 = AnalogPin.P1,
+        //% block="P2"
+        P2 = AnalogPin.P2,
+        //% block="P8"
+        P8 = AnalogPin.P8,
+        //% block="P12"
+        P12 = AnalogPin.P12,
+        //% block="P13"
+        P13 = AnalogPin.P13,
+        //% block="P14"
+        P14 = AnalogPin.P14,
+        //% block="P15"
+        P15 = AnalogPin.P15,
+        //% block="P16"
+        P16 = AnalogPin.P16,
+        //% block="S1"
+        S1 = Servos.S1,
+        //% block="S2"
+        S2 = Servos.S2,
+        //% block="S3"
+        S3 = Servos.S3,
+        //% block="S4"
+        S4 = Servos.S4,
+        //% block="S5"
+        S5 = Servos.S5,
+        //% block="S6"
+        S6 = Servos.S6,
+        //% block="S7"
+        S7 = Servos.S7,
+        //% block="S8"
+        S8 = Servos.S8
+    }
+    let x_axis_stepper_motor: StepperMotor = new StepperMotor(shield_pins.P8, shield_pins.P12, pksdriver.Motors.M3);
+    let y_axis_stepper_motor: StepperMotor = new StepperMotor(shield_pins.P13, shield_pins.P14, pksdriver.Motors.M2);
+    let z_axis_stepper_motor: StepperMotor = new StepperMotor(shield_pins.P15, shield_pins.P16, pksdriver.Motors.M1);
+    let stepper_array: StepperMotor[] = [x_axis_stepper_motor, y_axis_stepper_motor, z_axis_stepper_motor];
+    //% block="initialize stepper motor with | x_dir_pin %x_dir_pin| x_step_pin %x_step_pin| y_dir_pin %y_dir_pin| y_step_pin %y_step_pin | z_dir_pin %z_dir_pin| z_step_pin %z_step_pin | x_axis_motor_port %x_axis_motor_port| y_axis_motor_port %y_axis_motor_port| z_axis_motor_port %z_axis_motor_port" subcategory="Gotcha"
+    //% group="Initialization"
+    //% weight=80
+    //% x_dir_pin.defl=AnalogPin.P8
+    //% x_step_pin.defl=AnalogPin.P12
+    //% y_dir_pin.defl=AnalogPin.P13
+    //% y_step_pin.defl=AnalogPin.P14
+    //% z_dir_pin.defl=AnalogPin.P15
+    //% z_step_pin.defl=AnalogPin.P16
+    //% x_axis_motor_port.defl=pksdriver.Motors.M3
+    //% y_axis_motor_port.defl=pksdriver.Motors.M2
+    //% z_axis_motor_port.defl=pksdriver.Motors.M1
+    export function init_stepper_motor(
+        x_dir_pin: shield_pins = shield_pins.P8,
+        x_step_pin: shield_pins = shield_pins.P12,
+        y_dir_pin: shield_pins = shield_pins.P13,
+        y_step_pin: shield_pins = shield_pins.P14,
+        z_dir_pin: shield_pins = shield_pins.P15,
+        z_step_pin: shield_pins = shield_pins.P16,
+        x_axis_motor_port: pksdriver.Motors = pksdriver.Motors.M3,
+        y_axis_motor_port: pksdriver.Motors = pksdriver.Motors.M2,
+        z_axis_motor_port: pksdriver.Motors = pksdriver.Motors.M1
+    ): void {
+        x_axis_stepper_motor = new StepperMotor(x_dir_pin, x_step_pin, x_axis_motor_port);
+        y_axis_stepper_motor = new StepperMotor(y_dir_pin, y_step_pin, y_axis_motor_port);
+        z_axis_stepper_motor = new StepperMotor(z_dir_pin, z_step_pin, z_axis_motor_port);
+    }
+
+    /**
+    * set maximum steps
+    */
+    //% blockId=set_Maximum_Steps block="set %xyz_direction| axis maximum steps %max_steps" subcategory="Gotcha"
+    //% group="Initialization"
+    //% weight=75
+    export function set_Maximum_Steps(axis: xyz_direction, max_steps: number): void {
+        stepper_array[axis].setMaxStepCount(max_steps);
+    }
+
+    /**
+    * set minimum steps
+    */
+    //% blockId=set_Minimum_Steps block="set %xyz_direction| axis minimum steps %min_steps" subcategory="Gotcha"
+    //% group="Initialization"
+    //% weight=70
+    export function set_Minimum_Steps(axis: xyz_direction, min_steps: number): void {
+        stepper_array[axis].setMinStepCount(min_steps);
+    }
+
+    /**
+    * gotcha init position
+    */
+    //% blockId=init_position block="position zero" subcategory="Gotcha"
+    //% group="Initialization"
+    //% weight=65
+    export function init_position(): void {
+        for (let i = 0; i < stepper_array.length; i++) {
+            if (stepper_array[i].step_count) {
+                move_xyzdirection(i, -stepper_array[i].step_count);
+            }
+        }
+
+        //move_xyzdirection(xyz_direction.x_axis, 200000);
+        //move_xyzdirection(xyz_direction.y_axis, 200000);
+
+        //move_xyzdirection(xyz_direction.z_axis, 100000);
+    }
+
+    /**
+     * get steps by axis
+    */
+    //% blockId=get_steps block="%xyz_direction| steps" subcategory="Gotcha"
+    //
+    export function getSteps(axis: xyz_direction): number {
+        return stepper_array[axis].step_count;
+    }
+
+    /**
+     * gotcha motor on
+     * set axis to turn on motor
+     * set direction to 1 or 0
+    */
+    // direction : 0 is one direction, 1 is the other direction provide slider
+    //% blockId=setAxisMotorOn block="Set %xyz_direction| motor On with direction %direction" subcategory="Gotcha"
+    //% group="Stepper Motor"
+    //% weight=60
+    //% direction.min=0 direction.max=1
+    //% direction.defl=0
+    export function setAxisMotorOn(axis: xyz_direction, direction: number): void {
+        stepper_array[axis].keep_rotate(direction);
+
+    }
+
+    //% blockId=setAxisMotorOff block="Set %xyz_direction| motor off" subcategory="Gotcha"
+    //% group="Stepper Motor"
+    //% weight=50
+    export function setAxisMotorOff(axis: xyz_direction): void {
+        stepper_array[axis].stop_rotate();
+    }
+
+    /**
+    * gotcha move x y direction 
+    * can choose x axis or y axis to move
+    * and how many steps to move
+    */
+    //% blockId=move_xyzdirection block="move %xyzdirection| steps %steps " subcategory="Gotcha"
+    //% group="Stepper Motor"
+    //% weight=70
+    export function move_xyzdirection(axis: xyz_direction, steps: number): void {
+        stepper_array[axis].step(steps);
+        //if (!moving) {
+        //    moving = true
+        //    control.inBackground(moveMotors);
+        //}
     }
 
 }
@@ -1908,248 +2161,5 @@ namespace pksdriver {
 
     }
 
-    export enum xyz_direction {
-        //% block="x axis"
-        x_axis = 0,
-        //% block="y axis"
-        y_axis = 1,
-        //% block="z axis"
-        z_axis = 2
-    }
-
-    let stepper_initialized = false;
-    //construct 
-    class StepperMotor {
-        constructor(
-            public dir_pin: shield_pins,
-            public step_pin: shield_pins,
-            public motor_port: pksdriver.Motors,
-            public step_count: number = 0,
-            private current_dir: number = 0,//1 or 0
-            private max_step_count: number = 30000,
-            private min_step_count: number = 0,
-            private step_time_count: number = 0,
-            private step_time : number = 0,
-            private pin_type_servo: number = 0
-
-        ) {
-            //check if pin set used servo pins
-            if (this.dir_pin == shield_pins.S1 || this.dir_pin == shield_pins.S2 || this.dir_pin == shield_pins.S3 || this.dir_pin == shield_pins.S4 || this.dir_pin == shield_pins.S5 || this.dir_pin == shield_pins.S6 || this.dir_pin == shield_pins.S7 || this.dir_pin == shield_pins.S8) {
-                this.pin_type_servo = 1; //servo pin
-            } else {
-                this.pin_type_servo = 0; //analog pin
-            }
-        }
-
-        public setMaxStepCount(max_steps: number): void {
-            this.max_step_count = max_steps;
-        }
-
-        public setMinStepCount(min_steps: number): void {
-            this.min_step_count = min_steps;
-        }
-
-        public keep_rotate(dir: number): void {
-            pksdriver.lightOn(this.motor_port);
-            this.step_time= control.millis();
-            if (!this.pin_type_servo) {
-                pins.digitalWritePin(this.dir_pin, (dir == 0) ? 0 : 1);
-                pins.analogSetPeriod(this.step_pin, 38)
-                pins.analogWritePin(this.step_pin, 512)
-            }
-            this.current_dir = dir;
-
-        }
-
-        public stop_rotate(): void {
-            if (!this.pin_type_servo) {
-                pins.analogWritePin(this.step_pin, 0)
-            }
-            const time_use= control.millis() - this.step_time;
-            this.step_time_count += (this.current_dir == 0 ? time_use : -time_use);
-            pksdriver.lightOff(this.motor_port);
-        }
-
-        public step(steps: number): void {
-            if (!this.pin_type_servo) {
-                let dir = steps <= 0 ? 1 : 0;
-
-                if (steps) {
-                    if (this.step_count + steps > this.max_step_count) {
-                        steps = this.max_step_count - this.step_count;
-                        this.step_count = this.max_step_count;
-                    } else if (this.step_count + steps < this.min_step_count) {
-                        //find the minimum steps can go
-                        steps = this.min_step_count - this.step_count;
-                        this.step_count = this.min_step_count;
-                    }
-                    this.step_count += steps;
-                    steps = Math.abs(steps);
-                    pins.digitalWritePin(this.dir_pin, dir);
-                    pksdriver.lightOn(this.motor_port);
-                    while (steps--) {
-                        pins.digitalWritePin(this.step_pin, 1);
-                        control.waitMicros(10);
-                        pins.digitalWritePin(this.step_pin, 0);
-                        control.waitMicros(50);
-                    }
-                    pksdriver.lightOff(this.motor_port);
-                }
-            }
-        }
-    }
-
-    export enum shield_pins {
-        //% block="P0"
-        P0 = AnalogPin.P0,
-        //% block="P1"
-        P1 = AnalogPin.P1,
-        //% block="P2"
-        P2 = AnalogPin.P2,
-        //% block="P8"
-        P8 = AnalogPin.P8,
-        //% block="P12"
-        P12 = AnalogPin.P12,
-        //% block="P13"
-        P13 = AnalogPin.P13,
-        //% block="P14"
-        P14 = AnalogPin.P14,
-        //% block="P15"
-        P15 = AnalogPin.P15,
-        //% block="P16"
-        P16 = AnalogPin.P16,
-        //% block="S1"
-        S1 = Servos.S1,
-        //% block="S2"
-        S2 = Servos.S2,
-        //% block="S3"
-        S3 = Servos.S3,
-        //% block="S4"
-        S4 = Servos.S4,
-        //% block="S5"
-        S5 = Servos.S5,
-        //% block="S6"
-        S6 = Servos.S6,
-        //% block="S7"
-        S7 = Servos.S7,
-        //% block="S8"
-        S8 = Servos.S8
-    }
-    let x_axis_stepper_motor: StepperMotor = new StepperMotor(shield_pins.P8, shield_pins.P12, pksdriver.Motors.M3);
-    let y_axis_stepper_motor: StepperMotor = new StepperMotor(shield_pins.P13, shield_pins.P14, pksdriver.Motors.M2);
-    let z_axis_stepper_motor: StepperMotor = new StepperMotor(shield_pins.P15, shield_pins.P16, pksdriver.Motors.M1);
-    let stepper_array: StepperMotor[] = [x_axis_stepper_motor, y_axis_stepper_motor, z_axis_stepper_motor];
-    //% block="initialize stepper motor with | x_dir_pin %x_dir_pin| x_step_pin %x_step_pin| y_dir_pin %y_dir_pin| y_step_pin %y_step_pin | z_dir_pin %z_dir_pin| z_step_pin %z_step_pin | x_axis_motor_port %x_axis_motor_port| y_axis_motor_port %y_axis_motor_port| z_axis_motor_port %z_axis_motor_port" subcategory="Gotcha"
-    //% group="Initialization"
-    //% weight=80
-    //% x_dir_pin.defl=AnalogPin.P8
-    //% x_step_pin.defl=AnalogPin.P12
-    //% y_dir_pin.defl=AnalogPin.P13
-    //% y_step_pin.defl=AnalogPin.P14
-    //% z_dir_pin.defl=AnalogPin.P15
-    //% z_step_pin.defl=AnalogPin.P16
-    //% x_axis_motor_port.defl=pksdriver.Motors.M3
-    //% y_axis_motor_port.defl=pksdriver.Motors.M2
-    //% z_axis_motor_port.defl=pksdriver.Motors.M1
-    export function init_stepper_motor(
-        x_dir_pin: shield_pins = shield_pins.P8,
-        x_step_pin: shield_pins = shield_pins.P12,
-        y_dir_pin: shield_pins = shield_pins.P13,
-        y_step_pin: shield_pins = shield_pins.P14,
-        z_dir_pin: shield_pins = shield_pins.P15,
-        z_step_pin: shield_pins = shield_pins.P16,
-        x_axis_motor_port: pksdriver.Motors = pksdriver.Motors.M3,
-        y_axis_motor_port: pksdriver.Motors = pksdriver.Motors.M2,
-        z_axis_motor_port: pksdriver.Motors = pksdriver.Motors.M1
-    ): void {
-        x_axis_stepper_motor = new StepperMotor(x_dir_pin, x_step_pin, x_axis_motor_port);
-        y_axis_stepper_motor = new StepperMotor(y_dir_pin, y_step_pin, y_axis_motor_port);
-        z_axis_stepper_motor = new StepperMotor(z_dir_pin, z_step_pin, z_axis_motor_port);
-    }
-
-    /**
-    * set maximum steps
-    */
-    //% blockId=set_Maximum_Steps block="set %xyz_direction| axis maximum steps %max_steps" subcategory="Gotcha"
-    //% group="Initialization"
-    //% weight=75
-    export function set_Maximum_Steps(axis: xyz_direction, max_steps: number): void {
-        stepper_array[axis].setMaxStepCount(max_steps);
-    }
-
-    /**
-    * set minimum steps
-    */
-    //% blockId=set_Minimum_Steps block="set %xyz_direction| axis minimum steps %min_steps" subcategory="Gotcha"
-    //% group="Initialization"
-    //% weight=70
-    export function set_Minimum_Steps(axis: xyz_direction, min_steps: number): void {
-        stepper_array[axis].setMinStepCount(min_steps);
-    }
-
-    /**
-    * gotcha init position
-    */
-    //% blockId=init_position block="position zero" subcategory="Gotcha"
-    //% group="Initialization"
-    //% weight=65
-    export function init_position(): void {
-        for (let i = 0; i < stepper_array.length; i++) {
-            if (stepper_array[i].step_count) {
-                move_xyzdirection(i, -stepper_array[i].step_count);
-            }
-        }
-
-        //move_xyzdirection(xyz_direction.x_axis, 200000);
-        //move_xyzdirection(xyz_direction.y_axis, 200000);
-
-        //move_xyzdirection(xyz_direction.z_axis, 100000);
-    }
-
-    /**
-     * get steps by axis
-    */
-    //% blockId=get_steps block="%xyz_direction| steps" subcategory="Gotcha"
-    //
-    export function getSteps(axis: xyz_direction): number {
-        return stepper_array[axis].step_count;
-    }
-
-    /**
-     * gotcha motor on
-     * set axis to turn on motor
-     * set direction to 1 or 0
-    */
-    // direction : 0 is one direction, 1 is the other direction provide slider
-    //% blockId=setAxisMotorOn block="Set %xyz_direction| motor On with direction %direction" subcategory="Gotcha"
-    //% group="Stepper Motor"
-    //% weight=60
-    //% direction.min=0 direction.max=1
-    //% direction.defl=0
-    export function setAxisMotorOn(axis: xyz_direction, direction: number): void {
-        stepper_array[axis].keep_rotate(direction);
-
-    }
-
-    //% blockId=setAxisMotorOff block="Set %xyz_direction| motor off" subcategory="Gotcha"
-    export function setAxisMotorOff(axis: xyz_direction): void {
-        stepper_array[axis].stop_rotate();
-    }
-
-    /**
-    * gotcha move x y direction 
-    * can choose x axis or y axis to move
-    * and how many steps to move
-    */
-    //% blockId=move_xyzdirection block="move %xyzdirection| steps %steps " subcategory="Gotcha"
-    //% group="Stepper Motor"
-    //% weight=70
-    export function move_xyzdirection(axis: xyz_direction, steps: number): void {
-        stepper_array[axis].step(steps);
-        //if (!moving) {
-        //    moving = true
-        //    control.inBackground(moveMotors);
-        //}
-    }
 
 }
