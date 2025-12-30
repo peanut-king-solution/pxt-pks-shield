@@ -466,7 +466,7 @@ namespace pksdriver {
     /**
     * set maximum steps
     */
-    //% blockId=set_Maximum_Steps block="set %xyz_direction| axis maximum steps %max_steps" subcategory="Gotcha"
+    //% blockId=set_Maximum_Steps block="set %xyz_direction| maximum steps %max_steps" subcategory="Gotcha"
     //% group="Initialization"
     //% weight=75
     export function set_Maximum_Steps(axis: xyz_direction, max_steps: number): void {
@@ -476,7 +476,7 @@ namespace pksdriver {
     /**
     * set minimum steps
     */
-    //% blockId=set_Minimum_Steps block="set %xyz_direction| axis minimum steps %min_steps" subcategory="Gotcha"
+    //% blockId=set_Minimum_Steps block="set %xyz_direction| minimum steps %min_steps" subcategory="Gotcha"
     //% group="Initialization"
     //% weight=70
     export function set_Minimum_Steps(axis: xyz_direction, min_steps: number): void {
