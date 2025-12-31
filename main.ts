@@ -65,7 +65,7 @@ namespace pksdriver {
 
     function setFreq(freq: number): void {
         // Constrain the frequency
-        let prescaleval = 250000000;
+        let prescaleval = 25000000;
         prescaleval /= 4096;
         prescaleval /= freq;
         prescaleval -= 1;
