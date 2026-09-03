@@ -60,6 +60,12 @@ namespace pksdriverV1 {
         range_2000_dps
     }
 
+        
+    // for maze car's use only
+    export enum direction { FRONT, BACK, LEFT, RIGHT }
+    export enum cardinal_direction { NORTH, EAST, SOUTH, WEST }
+
+
 
 
     /**
@@ -1447,17 +1453,8 @@ namespace pksdriverV1 {
         yaw_ang /= 100;
         return yaw_ang;
     }
-}
 
-// for maze car's use only
-enum direction { FRONT, BACK, LEFT, RIGHT }
-enum cardinal_direction { NORTH, EAST, SOUTH, WEST }
-//% weight=60
-//% color=#1c4980 
-//% icon="\uf2db" 
-//% block="PKS Drivers"
-namespace pksdriver {
-
+    
     //% block="direction $wantedDirection" subcategory="Maze Car"
     //% group="Directions"
     //% weight=70
