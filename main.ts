@@ -2,11 +2,65 @@
 //% color=#1c4980 
 //% icon="\uf2db" 
 //% block="PKS Drivers"
-namespace pksdriver {
+namespace pksdriverV1 {
     const PCA9685_ADDRESS = 0x40
     const MODE = 0x00
     const PRESCALE = 0xFE
     const LED0_ON_L = 0x06
+
+
+    
+    export enum DHTtype {
+        DHT11,
+        DHT22,
+    }
+
+    export enum dataType {
+        humidity,
+        temperature,
+    }
+
+    export enum tempType {
+        Celsius,
+        Fahrenheit,
+    }
+
+    export enum axisXYZ {
+        //% block="X"
+        x,
+        //% block="Y"
+        y,
+        //% block="Z"
+        z
+    }
+
+    export enum accelSen {
+        // accelerometer sensitivity
+
+        //% block="2g"
+        range_2_g,
+        //% block="4g"
+        range_4_g,
+        //% block="8g"
+        range_8_g,
+        //% block="16g"
+        range_16_g
+    }
+
+    export enum gyroSen {
+        // gyroscope sensitivite
+
+        //% block="250dps"
+        range_250_dps,
+        //% block="500dps"
+        range_500_dps,
+        //% block="1000dps"
+        range_1000_dps,
+        //% block="2000dps"
+        range_2000_dps
+    }
+
+
 
     /**
      * The user can select the 8 steering gear controller.
@@ -550,13 +604,6 @@ namespace pksdriver {
         //}
     }
 
-}
-
-//% weight=60
-//% color=#1c4980 
-//% icon="\uf2db" 
-//% block="PKS Drivers"
-namespace pksdriver {
     function read(aht20: AHT20): { Humidity: number, Temperature: number } {
         if (!aht20.GetState().Calibrated) {
             aht20.Initialization();
@@ -675,29 +722,7 @@ namespace pksdriver {
         }
 
     }
-}
-
-enum DHTtype {
-    DHT11,
-    DHT22,
-}
-
-enum dataType {
-    humidity,
-    temperature,
-}
-
-enum tempType {
-    Celsius,
-    Fahrenheit,
-}
-
-//% weight=60
-//% color=#1c4980 
-//% icon="\uf2db" 
-//% block="PKS Drivers"
-namespace pksdriver {
-
+    
     let _temperature: number = -999.0
     let _humidity: number = -999.0
     let _temptype: tempType = tempType.Celsius
@@ -856,13 +881,6 @@ namespace pksdriver {
         return _sensorresponding
     }
 
-}
-
-//% weight=60
-//% color=#1c4980 
-//% icon="\uf2db" 
-//% block="PKS Drivers"
-namespace pksdriver {
     let DS1302_REG_SECOND = 0x80
     let DS1302_REG_MINUTE = 0x82
     let DS1302_REG_HOUR = 0x84
@@ -1214,48 +1232,7 @@ namespace pksdriver {
         pins.digitalWritePin(ds.cs, 0);
         return ds;
     }
-}
 
-enum axisXYZ {
-    //% block="X"
-    x,
-    //% block="Y"
-    y,
-    //% block="Z"
-    z
-}
-
-enum accelSen {
-    // accelerometer sensitivity
-
-    //% block="2g"
-    range_2_g,
-    //% block="4g"
-    range_4_g,
-    //% block="8g"
-    range_8_g,
-    //% block="16g"
-    range_16_g
-}
-
-enum gyroSen {
-    // gyroscope sensitivite
-
-    //% block="250dps"
-    range_250_dps,
-    //% block="500dps"
-    range_500_dps,
-    //% block="1000dps"
-    range_1000_dps,
-    //% block="2000dps"
-    range_2000_dps
-}
-
-//% weight=60
-//% color=#1c4980 
-//% icon="\uf2db" 
-//% block="PKS Drivers"
-namespace pksdriver {
     let i2cAddress = 0x68;
     let power_mgmt = 0x6b;
     // Acceleration addresses
@@ -1974,15 +1951,7 @@ namespace pksdriver {
         return angle;
     }
 
-}
-
-//ColorSensor
-//% weight=60
-//% color=#1c4980 
-//% icon="\uf2db" 
-//% block="PKS Drivers"
-namespace pksdriver {
-
+    
     enum Color {
         //i2c addr
         ADDR = 0x11,
@@ -2160,6 +2129,5 @@ namespace pksdriver {
         } return null
 
     }
-
 
 }
